@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { AppState, AudioFormat } from '@/types';
 import { effects } from '@/lib/audio-engine';
 import { useRecorder } from '@/hooks/useRecorder';
@@ -23,13 +23,39 @@ export default function App() {
   const recorder = useRecorder();
   const editor = useAudioEditor();
   const library = useLibrary();
-  const _settings = useSettings();
+  const settings = useSettings();
+
+  // Auto-stop when max duration is reached
+  useEffect(() => {
+    if (recorder.state.status === 'stopping' && appState === 'recording') {
+      handleStop();
+    }
+  }, [recorder.state.status]);
+
+  // Transition to editing when blob is ready after stop
+  useEffect(() => {
+    if (recorder.audioBlob && appState === 'recording') {
+      setAppState('editing');
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+      setFileName(`recording-${timestamp}`);
+    }
+  }, [recorder.audioBlob]);
+
+  const handleRecord = async () => {
+    setAppState('recording');
+    await recorder.startRecording(settings.settings.maxDuration);
+  };
+
+  const handleStop = async () => {
+    await recorder.stopRecording();
+    // Transition to editing happens in the audioBlob effect above
+  };
 
   const handleRecordToggle = () => {
     if (appState === 'idle') {
-      setAppState('recording');
+      handleRecord();
     } else if (appState === 'recording') {
-      setAppState('editing');
+      handleStop();
     }
   };
 
@@ -67,7 +93,7 @@ export default function App() {
             elapsed={recorder.state.elapsed}
             maxDuration={recorder.state.maxDuration}
           />
-          <LiveWaveform analyserNode={null} />
+          <LiveWaveform analyserNode={recorder.analyserNode} />
           <div className="flex justify-center py-4">
             <RecordButton isRecording={true} onToggle={handleRecordToggle} />
           </div>
@@ -109,21 +135,6 @@ export default function App() {
           />
         </div>
       )}
-
-      {/* Dev-only state switcher */}
-      <div className="fixed bottom-0 left-0 right-0 flex gap-1 border-t border-gray-800 bg-[#0f0f0f] p-2">
-        {(['idle', 'recording', 'editing'] as AppState[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => setAppState(s)}
-            className={`flex-1 rounded px-2 py-1 text-xs ${
-              appState === s ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

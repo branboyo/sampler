@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import type { RecordingState } from '@/types';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import type { RecordingState, ExtensionMessage } from '@/types';
+import { PORT_NAME } from '@/lib/messaging';
+import { startMediaStream, createRecorder, collectChunks, stopRecorder } from '@/lib/recorder';
 
 const INITIAL_STATE: RecordingState = {
   status: 'idle',
@@ -9,11 +11,109 @@ const INITIAL_STATE: RecordingState = {
 };
 
 export function useRecorder() {
-  const [state] = useState<RecordingState>(INITIAL_STATE);
-  const [audioBlob] = useState<Blob | null>(null);
+  const [state, setState] = useState<RecordingState>(INITIAL_STATE);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
-  const startRecording = async () => {};
-  const stopRecording = async () => {};
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const blobPromiseRef = useRef<Promise<Blob> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef = useRef<number>(0);
 
-  return { state, startRecording, stopRecording, audioBlob };
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      clearTimer();
+      if (audioCtxRef.current) audioCtxRef.current.close();
+    };
+  }, [clearTimer]);
+
+  const startRecording = useCallback(async (maxDuration: number) => {
+    try {
+      // Connect to background and request tab capture
+      const port = browser.runtime.connect({ name: PORT_NAME });
+
+      const streamId = await new Promise<string>((resolve, reject) => {
+        port.onMessage.addListener((msg: ExtensionMessage) => {
+          if (msg.type === 'CAPTURE_STARTED') {
+            resolve(msg.payload?.streamId as string);
+          } else if (msg.type === 'CAPTURE_ERROR') {
+            reject(new Error(msg.payload?.error as string));
+          }
+        });
+        port.postMessage({ type: 'START_CAPTURE' });
+      });
+
+      // Get the media stream from the stream ID
+      const stream = await startMediaStream(streamId);
+
+      // Set up AudioContext + AnalyserNode for live waveform
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      audioCtxRef.current = audioCtx;
+      setAnalyserNode(analyser);
+
+      // Create MediaRecorder and start collecting chunks
+      const recorder = createRecorder(stream);
+      recorderRef.current = recorder;
+      blobPromiseRef.current = collectChunks(recorder);
+
+      // Start timer
+      startTimeRef.current = Date.now();
+      setState({
+        status: 'recording',
+        elapsed: 0,
+        maxDuration,
+        streamId,
+      });
+
+      timerRef.current = setInterval(() => {
+        const elapsed = (Date.now() - startTimeRef.current) / 1000;
+        setState((prev) => {
+          if (elapsed >= prev.maxDuration) {
+            // Auto-stop at max duration — handled in App via effect
+            return { ...prev, elapsed: prev.maxDuration, status: 'stopping' };
+          }
+          return { ...prev, elapsed };
+        });
+      }, 100);
+    } catch (err) {
+      console.error('[ChromeWave] Recording failed:', err);
+      setState(INITIAL_STATE);
+    }
+  }, [clearTimer]);
+
+  const stopRecording = useCallback(async () => {
+    clearTimer();
+    setState((prev) => ({ ...prev, status: 'stopping' }));
+
+    if (recorderRef.current) {
+      stopRecorder(recorderRef.current);
+      const blob = await blobPromiseRef.current;
+      if (blob) setAudioBlob(blob);
+      recorderRef.current = null;
+      blobPromiseRef.current = null;
+    }
+
+    if (audioCtxRef.current) {
+      await audioCtxRef.current.close();
+      audioCtxRef.current = null;
+    }
+
+    setAnalyserNode(null);
+    setState(INITIAL_STATE);
+  }, [clearTimer]);
+
+  return { state, startRecording, stopRecording, audioBlob, analyserNode };
 }
