@@ -187,6 +187,15 @@ export default function WaveformEditor({
   useEffect(() => { onTrimChangeRef.current = onTrimChange; }, [onTrimChange]);
   useEffect(() => { onPlayingChangeRef.current = onPlayingChange; }, [onPlayingChange]);
 
+  // Mirror isPlaying prop in a ref so WaveSurfer event handlers can read it
+  // without capturing a stale closure value.
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+
+  // Set to true before a programmatic ws.pause() to prevent the 'pause' handler
+  // from treating it as a user-initiated stop or triggering the loop logic.
+  const programmaticPauseRef = useRef(false);
+
   // Latest audioBuffer in a ref for pointer-event handlers
   const audioBufferRef = useRef(audioBuffer);
   useEffect(() => { audioBufferRef.current = audioBuffer; }, [audioBuffer]);
@@ -438,6 +447,21 @@ export default function WaveformEditor({
       setDisplayEnd(region.end);
       onTrimChangeRef.current(region.start, region.end);
 
+      // Reset playback cursor to new trim start.
+      // If playing: pause without triggering loop logic, seek, then restart.
+      // If paused: just seek so the next Play begins from trim start.
+      const ws = wavesurferRef.current;
+      if (ws && ws.getDuration() > 0) {
+        const wasPlaying = ws.isPlaying();
+        if (wasPlaying) {
+          programmaticPauseRef.current = true;
+          ws.pause();
+          programmaticPauseRef.current = false;
+        }
+        ws.seekTo(region.start / ws.getDuration());
+        if (wasPlaying) region.play();
+      }
+
       // Close zoom when the handle is released
       if (zoomActiveRef.current && holdTriggerRef.current !== 'canvas') {
         zoomActiveRef.current = false;
@@ -481,6 +505,8 @@ export default function WaveformEditor({
       // Thin track line
       h.style.width = '2px';
       h.style.background = 'rgba(103, 232, 249, 0.65)';
+      h.style.boxShadow = '0 0 6px rgba(103, 232, 249, 0.45)';
+      h.style.cursor = 'default';
       if (side === 'left') h.style.borderLeft = 'none';
       else h.style.borderRight = 'none';
 
@@ -605,13 +631,30 @@ export default function WaveformEditor({
         }
       });
 
-      // 'finish' fires when the audio element reaches its natural end.
-      // 'pause' fires when region.play() hits region.end (WaveSurfer internally
-      // calls media.pause() at the boundary; this does NOT emit 'finish').
-      // Both must call onPlayingChange(false) so React state stays in sync.
-      const onStop = () => onPlayingChangeRef.current(false);
-      ws.on('finish', onStop);
-      ws.on('pause', onStop);
+      // 'pause' fires when region.play() hits region.end OR the user pauses.
+      // If we're still in "playing" state and the cursor is at/near the region
+      // end, treat it as a natural region end and loop back to region.start.
+      // programmaticPauseRef suppresses this logic during intentional seeks.
+      ws.on('pause', () => {
+        if (programmaticPauseRef.current) return;
+        const region = regionRef.current;
+        if (isPlayingRef.current && region && ws.getCurrentTime() >= region.end - 0.1) {
+          region.play(); // loop
+          return;
+        }
+        onPlayingChangeRef.current(false);
+      });
+
+      // 'finish' fires if the file plays to its absolute end (e.g. region.end
+      // equals the file duration). Loop the same way.
+      ws.on('finish', () => {
+        const region = regionRef.current;
+        if (isPlayingRef.current && region) {
+          region.play(); // loop
+          return;
+        }
+        onPlayingChangeRef.current(false);
+      });
 
       ws.loadBlob(bufferToWav(audioBuffer));
 
