@@ -683,8 +683,24 @@ export default function WaveformEditor({
 
   // ── Render ───────────────────────────────────────────────────────────────────
   const duration = audioBuffer?.duration ?? 1;
-  const startPct = (displayStart / duration) * 100;
-  const endPct = (displayEnd / duration) * 100;
+  const startPct = (displayStart / duration) * 100; // still used for zoom bubble anchor
+  const endPct = (displayEnd / duration) * 100;     // still used for zoom bubble anchor
+
+  // ── Label collision detection ────────────────────────────────────────────────
+  const containerW = containerRef.current?.clientWidth ?? 0;
+  const LABEL_W = 58;   // approx rendered px width of "M:SS.SSS"
+  const LABEL_GAP = 6;  // min px gap between label edges
+
+  // raw handle positions in px (0 when container not yet measured)
+  const rawLeftPx  = containerW > 0 ? (displayStart / duration) * containerW : 0;
+  const rawRightPx = containerW > 0 ? (displayEnd   / duration) * containerW : 0;
+
+  // Left label spans rawLeftPx → rawLeftPx + LABEL_W  (anchor='start')
+  // Right label spans rawRightPx - LABEL_W → rawRightPx (anchor='end')
+  // Collision when those ranges overlap by more than LABEL_GAP
+  const labelsCollide =
+    containerW > 0 && rawRightPx - rawLeftPx < 2 * LABEL_W + LABEL_GAP;
+  const midLabelPx = (rawLeftPx + rawRightPx) / 2;
 
   const zoomLabel = zoomState?.trigger === 'start'
     ? 'trim start'
@@ -732,28 +748,44 @@ export default function WaveformEditor({
       {/* Trim time labels */}
       {ready && (
         <div className="relative mt-1 h-5">
-          <EditableTrimTime
-            value={displayStart}
-            min={0}
-            max={displayEnd - 0.001}
-            anchor="start"
-            style={{ left: `${startPct}%` }}
-            onCommit={(v) => {
-              onTrimChangeRef.current(v, displayEnd);
-              regionRef.current?.setOptions({ start: v });
-            }}
-          />
-          <EditableTrimTime
-            value={displayEnd}
-            min={displayStart + 0.001}
-            max={duration}
-            anchor="end"
-            style={{ left: `${endPct}%` }}
-            onCommit={(v) => {
-              onTrimChangeRef.current(displayStart, v);
-              regionRef.current?.setOptions({ end: v });
-            }}
-          />
+          {labelsCollide ? (
+            /* Handles too close — single dash at midpoint */
+            <span
+              className="absolute -translate-x-1/2 font-mono text-[10px] text-cw-timestamp select-none"
+              style={{ left: `${midLabelPx}px` }}
+            >
+              –
+            </span>
+          ) : (
+            <>
+              <EditableTrimTime
+                value={displayStart}
+                min={0}
+                max={displayEnd - 0.001}
+                anchor="start"
+                style={{
+                  left: containerW > 0 ? `${rawLeftPx}px` : `${startPct}%`,
+                }}
+                onCommit={(v) => {
+                  onTrimChangeRef.current(v, displayEnd);
+                  regionRef.current?.setOptions({ start: v });
+                }}
+              />
+              <EditableTrimTime
+                value={displayEnd}
+                min={displayStart + 0.001}
+                max={duration}
+                anchor="end"
+                style={{
+                  left: containerW > 0 ? `${rawRightPx}px` : `${endPct}%`,
+                }}
+                onCommit={(v) => {
+                  onTrimChangeRef.current(displayStart, v);
+                  regionRef.current?.setOptions({ end: v });
+                }}
+              />
+            </>
+          )}
         </div>
       )}
 
