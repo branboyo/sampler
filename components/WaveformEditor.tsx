@@ -472,13 +472,17 @@ export default function WaveformEditor({
     for (const side of ['left', 'right'] as const) {
       if (!region.element) continue;
       const h = region.element.querySelector(
-        `[data-resize="${side}"]`,
+        side === 'left'
+          ? '[part*="region-handle-left"]'
+          : '[part*="region-handle-right"]',
       ) as HTMLElement | null;
       if (!h) continue;
 
       // Thin track line
       h.style.width = '2px';
       h.style.background = 'rgba(103, 232, 249, 0.65)';
+      if (side === 'left') h.style.borderLeft = 'none';
+      else h.style.borderRight = 'none';
 
       // Pill grip
       const pill = document.createElement('div');
