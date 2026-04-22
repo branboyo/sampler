@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { EditorState } from '@/types';
+import { applyPitchShift } from '@/lib/pitch-shift';
 
 const INITIAL_STATE: EditorState = {
   recordingId: null,
@@ -11,7 +12,7 @@ const INITIAL_STATE: EditorState = {
 };
 
 export function useAudioEditor() {
-  const [state] = useState<EditorState>(INITIAL_STATE);
+  const [state, setState] = useState<EditorState>(INITIAL_STATE);
 
   const loadRecording = async (_id: string) => {};
   const setTrimStart = (_time: number) => {};
@@ -20,5 +21,35 @@ export function useAudioEditor() {
   const play = () => {};
   const pause = () => {};
 
-  return { state, loadRecording, setTrimStart, setTrimEnd, applyEffect, play, pause };
+  const applyPitchShiftEffect = async (
+    semitones: number,
+    cents: number,
+    preserveFormants: boolean,
+  ): Promise<void> => {
+    if (!state.audioBuffer) return;
+    setState((s) => ({ ...s, isProcessing: true }));
+    try {
+      const result = await applyPitchShift(
+        state.audioBuffer,
+        semitones,
+        cents,
+        preserveFormants,
+      );
+      setState((s) => ({ ...s, audioBuffer: result, isProcessing: false }));
+    } catch (err) {
+      console.error('Pitch shift failed:', err);
+      setState((s) => ({ ...s, isProcessing: false }));
+    }
+  };
+
+  return {
+    state,
+    loadRecording,
+    setTrimStart,
+    setTrimEnd,
+    applyEffect,
+    play,
+    pause,
+    applyPitchShiftEffect,
+  };
 }
