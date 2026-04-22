@@ -26,11 +26,15 @@ export function useAudioEditor() {
     cents: number,
     preserveFormants: boolean,
   ): Promise<void> => {
-    if (!state.audioBuffer) return;
-    setState((s) => ({ ...s, isProcessing: true }));
+    let currentBuffer: AudioBuffer | null = null;
+    setState((s) => {
+      currentBuffer = s.audioBuffer;
+      return { ...s, isProcessing: true };
+    });
+    if (!currentBuffer) return;
     try {
       const result = await applyPitchShift(
-        state.audioBuffer,
+        currentBuffer,
         semitones,
         cents,
         preserveFormants,

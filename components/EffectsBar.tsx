@@ -42,7 +42,7 @@ export default function EffectsBar({
               type="button"
               onClick={() => onApply(effect.id)}
               disabled={disabled}
-              className="flex-1 rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-300 disabled:opacity-50"
+              className="flex-1 rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-300 transition-colors hover:border-gray-500 hover:text-white disabled:opacity-50"
             >
               {effect.icon} {effect.label}
             </button>

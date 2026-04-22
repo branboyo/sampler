@@ -1,13 +1,13 @@
 import createRubberBand from 'rubberband-wasm';
 import type { RBModule } from 'rubberband-wasm';
 
-let rbModule: RBModule | null = null;
+let rbModulePromise: Promise<RBModule> | null = null;
 
-async function getRBModule(): Promise<RBModule> {
-  if (!rbModule) {
-    rbModule = await createRubberBand();
+function getRBModule(): Promise<RBModule> {
+  if (!rbModulePromise) {
+    rbModulePromise = createRubberBand();
   }
-  return rbModule;
+  return rbModulePromise;
 }
 
 export function computePitchScale(semitones: number, cents: number): number {
@@ -35,6 +35,8 @@ export async function applyPitchShift(
     RubberBandStretcher.OptionPitchHighQuality;
   if (preserveFormants) {
     options |= RubberBandStretcher.OptionFormantPreserved;
+  } else {
+    options |= RubberBandStretcher.OptionFormantShifted;
   }
 
   const stretcher = new RubberBandStretcher(
