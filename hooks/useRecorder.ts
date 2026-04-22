@@ -89,7 +89,7 @@ export function useRecorder() {
         });
       }, 100);
     } catch (err) {
-      console.error('[ChromeWave] Recording failed:', err);
+      console.error('[Flih] Recording failed:', err);
       setState(INITIAL_STATE);
     }
   }, [clearTimer]);

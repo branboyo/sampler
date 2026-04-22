@@ -33,12 +33,14 @@ export async function applyPitchShift(
 
   const options =
     RubberBandOption.RubberBandOptionProcessOffline |
-    RubberBandOption.RubberBandOptionPitchHighQuality |
+    RubberBandOption.RubberBandOptionEngineFiner |
+    RubberBandOption.RubberBandOptionChannelsTogether |
     (preserveFormants
       ? RubberBandOption.RubberBandOptionFormantPreserved
       : RubberBandOption.RubberBandOptionFormantShifted);
 
   const state = rb.rubberband_new(sampleRate, numberOfChannels, options, 1.0, pitchScale);
+  rb.rubberband_set_expected_input_duration(state, length);
 
   // Allocate per-channel input buffers on the WASM heap + a pointer array pointing to them
   const inPtrs: number[] = [];

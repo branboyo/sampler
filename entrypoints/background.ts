@@ -7,7 +7,7 @@ export default defineBackground({
 
     browser.runtime.onConnect.addListener((port) => {
       if (port.name !== PORT_NAME) return;
-      console.log('[ChromeWave] Side panel connected');
+      console.log('[Flih] Side panel connected');
 
       port.onMessage.addListener(async (msg: ExtensionMessage) => {
         if (msg.type === 'START_CAPTURE') {
@@ -30,6 +30,6 @@ export default defineBackground({
       });
     });
 
-    console.log('[ChromeWave] Background service worker loaded');
+    console.log('[Flih] Background service worker loaded');
   },
 });

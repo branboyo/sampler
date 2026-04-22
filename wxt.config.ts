@@ -8,7 +8,7 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
   }),
   manifest: {
-    name: 'ChromeWave',
+    name: 'Flih',
     description: 'Record tab audio with waveform editing and DAW export',
     permissions: ['tabCapture', 'storage', 'downloads', 'unlimitedStorage'],
     action: {},

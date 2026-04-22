@@ -5,7 +5,7 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-md bg-[#0f0f0f] p-8 text-white">
-      <h1 className="mb-6 text-lg font-semibold">ChromeWave Settings</h1>
+      <h1 className="mb-6 text-lg font-semibold">Flih Settings</h1>
 
       <label className="mb-4 block">
         <span className="mb-1 block text-xs uppercase tracking-wider text-gray-400">

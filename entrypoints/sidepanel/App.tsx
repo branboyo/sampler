@@ -71,7 +71,7 @@ export default function App() {
               appState === 'recording' ? 'animate-pulse bg-red-500' : 'bg-green-500'
             }`}
           />
-          <span className="text-sm font-semibold">ChromeWave</span>
+          <span className="text-sm font-semibold">Flih</span>
         </div>
         <button className="text-xs text-gray-500">⚙</button>
       </div>

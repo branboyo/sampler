@@ -1,7 +1,7 @@
 import type { RecordingMeta, Settings } from '@/types';
 
 export const DEFAULT_SETTINGS: Settings = {
-  folderName: 'ChromeWave',
+  folderName: 'Flih',
   preferredFormat: 'wav',
   maxDuration: 300,
   sampleRate: 44100,
