@@ -32,4 +32,11 @@ export const effects: AudioEffect[] = [
     icon: '↔',
     apply: async (buffer, _ctx) => reverseAudio(buffer),
   },
+  {
+    id: 'pitch',
+    label: 'Pitch',
+    icon: '♪',
+    panel: true,
+    apply: async (buffer, _ctx) => buffer, // no-op: PitchShiftControls calls applyPitchShift directly
+  },
 ];
