@@ -33,7 +33,7 @@ export function useAudioEditor() {
       });
       return audioBuffer;
     } catch (err) {
-      console.error('[ChromeWave] Failed to decode audio:', err);
+      console.error('[Flih] Failed to decode audio:', err);
       setState((prev) => ({ ...prev, isProcessing: false }));
       return null;
     }
@@ -44,7 +44,7 @@ export function useAudioEditor() {
     try {
       const blob = await getAudioBlob(id);
       if (!blob) {
-        console.error('[ChromeWave] No audio blob found for id:', id);
+        console.error('[Flih] No audio blob found for id:', id);
         setState((prev) => ({ ...prev, isProcessing: false }));
         return;
       }
@@ -58,7 +58,7 @@ export function useAudioEditor() {
         isProcessing: false,
       });
     } catch (err) {
-      console.error('[ChromeWave] Failed to load recording:', err);
+      console.error('[Flih] Failed to load recording:', err);
       setState((prev) => ({ ...prev, isProcessing: false }));
     }
   }, []);
@@ -97,7 +97,7 @@ export function useAudioEditor() {
         isProcessing: false,
       });
     } catch (err) {
-      console.error('[ChromeWave] Effect failed:', err);
+      console.error('[Flih] Effect failed:', err);
       setState((prev) => ({ ...prev, isProcessing: false }));
     }
   }, [state.audioBuffer, state.trimStart, state.trimEnd, state.recordingId]);

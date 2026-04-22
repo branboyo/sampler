@@ -1,13 +1,13 @@
 import type { RecordingMeta, Settings } from '@/types';
 
 export const DEFAULT_SETTINGS: Settings = {
-  folderName: 'ChromeWave',
+  folderName: 'Flih',
   preferredFormat: 'wav',
   sampleRate: 44100,
   waveformZoomMode: 'bubble',
 };
 
-const DB_NAME = 'chromewave-db';
+const DB_NAME = 'flih-db';
 const STORE_NAME = 'audio-blobs';
 const DB_VERSION = 1;
 

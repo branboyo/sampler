@@ -42,13 +42,13 @@ export function useRecorder() {
   const startRecording = useCallback(async () => {
     setError(null);
     try {
-      console.log('[ChromeWave] startRecording called, connecting to background...');
+      console.log('[Flih] startRecording called, connecting to background...');
       // Connect to background and request tab capture
       const port = browser.runtime.connect({ name: PORT_NAME });
 
       const streamId = await new Promise<string>((resolve, reject) => {
         port.onMessage.addListener((msg: ExtensionMessage) => {
-          console.log('[ChromeWave] Received message from background:', msg);
+          console.log('[Flih] Received message from background:', msg);
           if (msg.type === 'CAPTURE_STARTED') {
             resolve(msg.payload?.streamId as string);
           } else if (msg.type === 'CAPTURE_ERROR') {
@@ -56,14 +56,14 @@ export function useRecorder() {
           }
         });
         port.postMessage({ type: 'START_CAPTURE' });
-        console.log('[ChromeWave] Sent START_CAPTURE to background');
+        console.log('[Flih] Sent START_CAPTURE to background');
       });
 
-      console.log('[ChromeWave] Got streamId:', streamId);
+      console.log('[Flih] Got streamId:', streamId);
 
       // Get the media stream from the stream ID
       const stream = await startMediaStream(streamId);
-      console.log('[ChromeWave] Got media stream, tracks:', stream.getTracks().length);
+      console.log('[Flih] Got media stream, tracks:', stream.getTracks().length);
 
       // Set up AudioContext + AnalyserNode for live waveform
       const audioCtx = new AudioContext();
@@ -102,7 +102,7 @@ export function useRecorder() {
       }, 100);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[ChromeWave] Recording failed:', message);
+      console.error('[Flih] Recording failed:', message);
       setError(message);
       setState(INITIAL_STATE);
       throw err; // Re-throw so App.tsx can catch it

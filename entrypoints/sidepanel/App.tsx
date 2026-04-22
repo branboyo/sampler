@@ -162,7 +162,7 @@ export default function App() {
               appState === 'recording' ? 'bg-cw-recording pulse-recording' : 'bg-cw-success-bold'
             }`}
           />
-          <span className="text-sm font-semibold text-cw-text-primary">ChromeWave</span>
+          <span className="text-sm font-semibold text-cw-text-primary">Flih</span>
         </div>
         <div className="flex items-center gap-2">
           {appState === 'editing' && (

@@ -27,7 +27,7 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-md bg-cw-bg p-6 font-ui text-cw-text-primary">
-      <h1 className="mb-6 text-base font-semibold text-cw-text-primary">ChromeWave Settings</h1>
+      <h1 className="mb-6 text-base font-semibold text-cw-text-primary">Flih Settings</h1>
 
       <label className="mb-5 block">
         <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-widest text-cw-text-secondary">

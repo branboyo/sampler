@@ -39,7 +39,7 @@ export function useFxChain(rawBuffer: AudioBuffer | null) {
         if (!cancelled) setProcessedBuffer(result);
       })
       .catch((err) => {
-        console.error('[ChromeWave] FX chain processing failed:', err);
+        console.error('[Flih] FX chain processing failed:', err);
         if (!cancelled) setProcessedBuffer(rawBuffer);
       })
       .finally(() => {
