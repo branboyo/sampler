@@ -1,1 +1,95 @@
 @import "tailwindcss";
+
+@theme {
+  --color-cw-bg: #0a0c14;
+  --color-cw-surface: #111427;
+  --color-cw-elevated: #1a1d33;
+  --color-cw-border: #252940;
+  --color-cw-text-primary: #e0e2ef;
+  --color-cw-text-secondary: #6e7191;
+  --color-cw-recording: #c084fc;
+  --color-cw-recording-bold: #a855f7;
+  --color-cw-action: #818cf8;
+  --color-cw-action-bold: #6366f1;
+  --color-cw-timestamp: #67e8f9;
+  --color-cw-success: #6ee7b7;
+  --color-cw-success-bold: #34d399;
+  --color-cw-error: #f472b6;
+
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.6); }
+  50% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(192, 132, 252, 0); }
+}
+
+.pulse-recording {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Custom range slider */
+.cw-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-cw-border);
+  outline: none;
+  cursor: pointer;
+}
+
+.cw-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-cw-action-bold);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.cw-slider::-webkit-slider-thumb:hover {
+  background: var(--color-cw-action);
+  transform: scale(1.2);
+}
+
+.cw-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-cw-action-bold);
+  cursor: pointer;
+}
+
+.cw-slider::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-cw-border);
+}
+
+/* WaveSurfer region trim handles */
+[part~="region-handle"] {
+  width: 3px !important;
+  background: var(--color-cw-timestamp) !important;
+  opacity: 1 !important;
+  cursor: ew-resize !important;
+  overflow: visible !important;
+}
+
+[part~="region-handle"]::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 28px;
+  background: var(--color-cw-timestamp);
+  border-radius: 3px;
+  opacity: 0.85;
+  box-shadow: 0 0 6px rgba(103, 232, 249, 0.5);
+}

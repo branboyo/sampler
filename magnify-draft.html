@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ChromeWave — Waveform Magnification Draft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cw-bg: #0a0c14; --cw-surface: #111427; --cw-elevated: #1a1d33;
+      --cw-border: #252940; --cw-text-primary: #e0e2ef; --cw-text-secondary: #6e7191;
+      --cw-action: #818cf8; --cw-action-bold: #6366f1; --cw-timestamp: #67e8f9;
+      --cw-recording: #c084fc;
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body {
+      background: var(--cw-bg); font-family: var(--font-ui); color: var(--cw-text-primary);
+      padding: 32px 16px 48px; display: flex; flex-direction: column; align-items: center; gap: 48px;
+    }
+    .page-title {
+      font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--cw-text-secondary); text-align: center;
+    }
+    .option-label {
+      font-size: 10px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--cw-action); margin-bottom: 12px; text-align: center;
+    }
+    .card {
+      width: 320px; border-radius: 10px; border: 1px solid var(--cw-border);
+      background: var(--cw-surface); padding: 12px;
+    }
+    .card-overflow { overflow: visible; padding-top: 110px; }
+
+    /* ── Waveform wrap ── */
+    .waveform-wrap { position: relative; border-radius: 8px; background: var(--cw-surface); overflow: visible; }
+    canvas.wave { display: block; border-radius: 6px; width: 100%; cursor: crosshair; }
+
+    /* ── Trim region ── */
+    .trim-overlay { position: absolute; top: 0; bottom: 0; background: rgba(103,232,249,.06); pointer-events: none; }
+    .trim-handle {
+      position: absolute; top: 0; bottom: 0; width: 3px; background: var(--cw-timestamp);
+      cursor: ew-resize; z-index: 2; transition: box-shadow .15s;
+    }
+    .trim-handle:hover, .trim-handle.active {
+      box-shadow: 0 0 0 8px rgba(103,232,249,.12);
+    }
+    .trim-handle::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%); width: 10px; height: 28px;
+      background: var(--cw-timestamp); border-radius: 3px;
+      box-shadow: 0 0 6px rgba(103,232,249,.5);
+    }
+    /* Pulsing ring when magnification activates via handle */
+    .trim-handle.magnifying::before {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--cw-timestamp);
+      animation: ring-pulse .6s ease-out forwards;
+    }
+    @keyframes ring-pulse {
+      0%   { opacity: 1; transform: translate(-50%,-50%) scale(.5); }
+      100% { opacity: 0; transform: translate(-50%,-50%) scale(2.2); }
+    }
+
+    /* ── Time labels ── */
+    .time-row { position: relative; height: 18px; margin-top: 4px; }
+    .time-label {
+      position: absolute; transform: translateX(-50%);
+      font-family: var(--font-mono); font-size: 10px; color: var(--cw-timestamp);
+    }
+    .time-label.active { color: #fff; font-weight: 700; }
+
+    /* ── Cursor line ── */
+    .cursor-line { position: absolute; top: 0; bottom: 0; width: 1.5px; background: var(--cw-action-bold); pointer-events: none; }
+    .cursor-dot { position: absolute; top: -3px; left: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--cw-action-bold); box-shadow: 0 0 6px rgba(99,102,241,.7); }
+
+    /* ══ OPTION A — BUBBLE ══ */
+    .bubble {
+      position: absolute; bottom: calc(100% + 14px);
+      transform: translateX(-50%);
+      width: 210px;
+      background: var(--cw-elevated);
+      border: 1.5px solid var(--cw-action-bold);
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6), 0 0 0 1px rgba(99,102,241,.15);
+      padding: 8px; z-index: 20;
+    }
+    .bubble::after {
+      content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 7px solid transparent; border-top-color: var(--cw-action-bold);
+    }
+    /* when triggered by a handle, caret points at the handle side */
+    .bubble.from-handle-start::after { left: 20%; }
+    .bubble.from-handle-end::after   { left: 80%; }
+
+    .bubble-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .bubble-label { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--cw-action); }
+    .bubble-source { font-size: 9px; color: var(--cw-text-secondary); font-family: var(--font-mono); }
+    .bubble-zoom { font-family: var(--font-mono); font-size: 9px; color: var(--cw-text-secondary); }
+    canvas.bubble-wave { display: block; border-radius: 4px; width: 100%; background: #0d0f1e; }
+    .bubble-time { margin-top: 4px; font-family: var(--font-mono); font-size: 9px; color: var(--cw-timestamp); text-align: center; }
+
+    /* handle-position indicator inside bubble */
+    .bubble-handle-line {
+      position: absolute; top: 26px; bottom: 20px; width: 1.5px; background: var(--cw-timestamp);
+      box-shadow: 0 0 4px rgba(103,232,249,.7); pointer-events: none;
+    }
+
+    /* ══ OPTION B — INLINE PANEL ══ */
+    .inline-zoom-panel {
+      margin-top: 8px; border-radius: 8px; border: 1.5px solid var(--cw-action-bold);
+      background: #0d0f1e; overflow: hidden; position: relative;
+    }
+    .inline-zoom-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 8px; background: rgba(99,102,241,.08); border-bottom: 1px solid rgba(99,102,241,.2);
+    }
+    .inline-zoom-label { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--cw-action); }
+    .inline-zoom-source { font-size: 9px; color: var(--cw-text-secondary); }
+    .inline-zoom-range { font-family: var(--font-mono); font-size: 9px; color: var(--cw-timestamp); }
+    canvas.inline-wave { display: block; width: 100%; background: #0d0f1e; }
+    .inline-zoom-footer {
+      display: flex; justify-content: space-between; padding: 3px 8px;
+      border-top: 1px solid rgba(99,102,241,.12);
+    }
+    .inline-zoom-footer span { font-family: var(--font-mono); font-size: 9px; color: var(--cw-timestamp); }
+    .inline-trim-handle {
+      position: absolute; top: 28px; bottom: 20px; width: 2px;
+      background: var(--cw-timestamp); box-shadow: 0 0 6px rgba(103,232,249,.6);
+    }
+    .inline-trim-handle::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%); width: 8px; height: 22px;
+      background: var(--cw-timestamp); border-radius: 2px;
+      box-shadow: 0 0 4px rgba(103,232,249,.5);
+    }
+
+    /* annotation */
+    .annotation {
+      width: 320px; background: rgba(26,29,51,.5); border: 1px solid var(--cw-border);
+      border-radius: 8px; padding: 10px 14px; font-size: 11px; line-height: 1.7; color: var(--cw-text-secondary);
+    }
+    .annotation b { color: var(--cw-text-primary); }
+    .annotation ul { padding-left: 16px; margin-top: 4px; }
+    .annotation li { margin: 2px 0; }
+    .annotation code { font-family: var(--font-mono); font-size: 10px; color: var(--cw-timestamp); background: rgba(103,232,249,.07); padding: 1px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<p class="page-title">ChromeWave — Waveform Magnification · UI Draft v2</p>
+
+<!-- ════════════════════════════════════
+     OPTION A — FLOATING BUBBLE
+     Shown: triggered from HANDLE (start)
+════════════════════════════════════ -->
+<div>
+  <p class="option-label">Option A — Floating Bubble · triggered from trim handle</p>
+  <div class="card card-overflow">
+    <div class="waveform-wrap" id="wrapA">
+
+      <!-- Bubble anchored to the start handle -->
+      <div class="bubble from-handle-start" id="bubbleA" style="left:18%">
+        <div class="bubble-header">
+          <span class="bubble-label">Magnified</span>
+          <span class="bubble-source" id="bubSrcA">trim start</span>
+          <span class="bubble-zoom">8×</span>
+        </div>
+        <div style="position:relative">
+          <canvas class="bubble-wave" id="bubCanvasA" height="50"></canvas>
+          <!-- handle position inside zoomed view -->
+          <div class="bubble-handle-line" id="bubHandleA" style="left:50%"></div>
+        </div>
+        <div class="bubble-time" id="bubTimeA">0:01.120</div>
+      </div>
+
+      <canvas class="wave" id="waveA" height="80"></canvas>
+      <div class="trim-overlay" style="left:18%;right:22%"></div>
+
+      <!-- Start handle — magnifying class shows ring -->
+      <div class="trim-handle magnifying" id="handleStart" style="left:18%"></div>
+      <!-- End handle -->
+      <div class="trim-handle" id="handleEnd" style="right:22%"></div>
+    </div>
+    <div class="time-row">
+      <span class="time-label active" id="timeStartA" style="left:18%">0:01.120</span>
+      <span class="time-label" style="left:78%">0:04.890</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     OPTION B — INLINE PANEL
+     Shown: triggered from HANDLE (end)
+════════════════════════════════════ -->
+<div>
+  <p class="option-label">Option B — Inline Zoom Panel · triggered from trim handle</p>
+  <div class="card">
+    <div class="waveform-wrap" id="wrapB">
+      <canvas class="wave" id="waveB" height="80"></canvas>
+      <div class="trim-overlay" style="left:18%;right:22%"></div>
+      <div class="trim-handle" style="left:18%"></div>
+      <!-- End handle — magnifying -->
+      <div class="trim-handle magnifying" style="right:22%"></div>
+    </div>
+    <div class="time-row">
+      <span class="time-label" style="left:18%">0:01.120</span>
+      <span class="time-label active" style="left:78%">0:04.890</span>
+    </div>
+
+    <!-- Inline panel anchored to end handle -->
+    <div class="inline-zoom-panel" id="inlinePanel">
+      <div class="inline-zoom-header">
+        <span class="inline-zoom-label">Magnified · 8×</span>
+        <span class="inline-zoom-source">trim end</span>
+        <span class="inline-zoom-range">0:04.640 – 0:05.140</span>
+      </div>
+      <div style="position:relative">
+        <canvas class="inline-wave" id="waveZoomB" height="56"></canvas>
+        <!-- handle sits at 50% of the zoomed window = exactly at trim end -->
+        <div class="inline-trim-handle" style="left:50%"></div>
+      </div>
+      <div class="inline-zoom-footer">
+        <span>0:04.640</span>
+        <span>handle: 0:04.890</span>
+        <span>0:05.140</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- annotations -->
+<div class="annotation">
+  <b>Triggers (same 500 ms hold threshold)</b>
+  <ul>
+    <li><b>Waveform canvas hold</b> — magnifies the region around the held position for cursor-based fine scrubbing.</li>
+    <li><b>Trim handle hold / drag</b> — magnifies the region around <em>that handle's current position</em>; dragging inside the magnified view moves the handle at sub-pixel precision. The caret / panel label indicates which handle is active (<code>trim start</code> or <code>trim end</code>).</li>
+  </ul>
+</div>
+<div class="annotation">
+  <b>Shared behaviour</b>
+  <ul>
+    <li>Zoomed window = ±250 ms centred on the hold point.</li>
+    <li>Dragging within the zoomed view moves the handle; the main waveform handle moves in sync.</li>
+    <li>Release closes magnification.</li>
+    <li>The active time label in the main view turns white + bold while magnified.</li>
+    <li>A brief pulsing ring around the handle signals zoom activation.</li>
+  </ul>
+</div>
+
+<script>
+  function drawWave(canvas, { seed=1, barColor='rgba(110,113,145,0.35)', barW=3, gap=1, zoom=1, offset=0 }={}) {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.offsetWidth * dpr;
+    const W = canvas.width, H = canvas.height;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+    const totalBars = Math.floor(W / ((barW + gap) * dpr));
+    let rng = seed;
+    const rand = () => { rng = (rng * 16807) % 2147483647; return (rng - 1) / 2147483646; };
+    const fullLen = Math.ceil(totalBars / zoom) + 200;
+    const data = [];
+    for (let i = 0; i < fullLen; i++) data.push((rand() * 0.6 + 0.2) * Math.sin(i / fullLen * Math.PI) + rand() * 0.12);
+    for (let i = 0; i < totalBars; i++) {
+      const src = Math.floor(offset * (data.length - totalBars / zoom) + i / zoom);
+      const amp = Math.min(1, data[src % data.length] || 0.1);
+      const bh = amp * (H * 0.85);
+      const x = i * (barW + gap) * dpr;
+      ctx.fillStyle = barColor;
+      ctx.beginPath();
+      ctx.roundRect(x, (H - bh) / 2, barW * dpr, bh, [1]);
+      ctx.fill();
+    }
+  }
+
+  // Fake duration for time calcs
+  const DURATION = 6.0;
+  function toTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = (sec % 60).toFixed(3).padStart(6, '0');
+    return `${m}:${s}`;
+  }
+
+  window.addEventListener('load', () => {
+    drawWave(document.getElementById('waveA'), { seed: 42 });
+    drawWave(document.getElementById('waveB'), { seed: 42 });
+    // Bubble zoomed at trim-start position (18% of 6s = 1.08s → offset ~0.18)
+    drawWave(document.getElementById('bubCanvasA'), { seed: 42, barColor: 'rgba(110,113,145,.5)', barW: 2, zoom: 8, offset: 0.18 });
+    // Inline zoomed at trim-end position (78% of 6s = 4.68s → offset ~0.78)
+    drawWave(document.getElementById('waveZoomB'), { seed: 42, barColor: 'rgba(110,113,145,.55)', barW: 2, zoom: 8, offset: 0.78 });
+  });
+
+  /* ── Interactive Option A: dragging start handle shows bubble ── */
+  const handleStart = document.getElementById('handleStart');
+  const bubA = document.getElementById('bubbleA');
+  const bubCanvasA = document.getElementById('bubCanvasA');
+  const bubTimeA = document.getElementById('bubTimeA');
+  const bubHandleA = document.getElementById('bubHandleA');
+  const timeStartA = document.getElementById('timeStartA');
+  const wrapA = document.getElementById('wrapA');
+  let draggingA = false, holdTimerA = null;
+
+  handleStart.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    holdTimerA = setTimeout(() => {
+      draggingA = true;
+      handleStart.classList.add('magnifying');
+    }, 500);
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!draggingA) return;
+    const rect = wrapA.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(0.75, (e.clientX - rect.left) / rect.width));
+    const sec = pct * DURATION;
+    handleStart.style.left = (pct * 100) + '%';
+    bubA.style.left = (pct * 100) + '%';
+    timeStartA.textContent = toTime(sec);
+    bubTimeA.textContent = toTime(sec);
+    drawWave(bubCanvasA, { seed: 42, barColor: 'rgba(110,113,145,.5)', barW: 2, zoom: 8, offset: pct });
+  });
+
+  window.addEventListener('mouseup', () => {
+    clearTimeout(holdTimerA);
+    draggingA = false;
+    handleStart.classList.remove('magnifying');
+  });
+</script>
+</body>
+</html>

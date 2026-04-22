@@ -12,6 +12,7 @@ interface WaveformEditorProps {
   zoomMode: 'bubble' | 'inline';
   onTrimChange: (start: number, end: number) => void;
   onPlayingChange: (playing: boolean) => void;
+  onApplyTrim?: (newBuffer: AudioBuffer) => void;
 }
 
 // ── Zoom state ────────────────────────────────────────────────────────────────
@@ -166,6 +167,7 @@ export default function WaveformEditor({
   zoomMode,
   onTrimChange,
   onPlayingChange,
+  onApplyTrim,
 }: WaveformEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
@@ -184,8 +186,10 @@ export default function WaveformEditor({
   // Keep latest callbacks in refs so async event handlers never go stale
   const onTrimChangeRef = useRef(onTrimChange);
   const onPlayingChangeRef = useRef(onPlayingChange);
+  const onApplyTrimRef = useRef(onApplyTrim);
   useEffect(() => { onTrimChangeRef.current = onTrimChange; }, [onTrimChange]);
   useEffect(() => { onPlayingChangeRef.current = onPlayingChange; }, [onPlayingChange]);
+  useEffect(() => { onApplyTrimRef.current = onApplyTrim; }, [onApplyTrim]);
 
   // Mirror isPlaying prop in a ref so WaveSurfer event handlers can read it
   // without capturing a stale closure value.
@@ -196,11 +200,17 @@ export default function WaveformEditor({
   // from treating it as a user-initiated stop or triggering the loop logic.
   const programmaticPauseRef = useRef(false);
 
+  // rAF handle for the loop-boundary polling loop. null when not running.
+  const loopRafRef = useRef<number | null>(null);
+
   // Latest audioBuffer in a ref for pointer-event handlers
   const audioBufferRef = useRef(audioBuffer);
   useEffect(() => { audioBufferRef.current = audioBuffer; }, [audioBuffer]);
 
   const [ready, setReady] = useState(false);
+  // True only during FX soft-reloads — dims the waveform but does NOT collapse
+  // layout (no setReady(false)), preventing the height-shift jitter.
+  const [isUpdating, setIsUpdating] = useState(false);
   const [displayStart, setDisplayStart] = useState(trimStart);
   const [displayEnd, setDisplayEnd] = useState(trimEnd);
 
@@ -393,6 +403,48 @@ export default function WaveformEditor({
     }
   }, []);
 
+  const stopLoopRaf = useCallback(() => {
+    if (loopRafRef.current !== null) {
+      cancelAnimationFrame(loopRafRef.current);
+      loopRafRef.current = null;
+    }
+  }, []);
+
+  const startLoopRaf = useCallback(() => {
+    if (loopRafRef.current !== null) cancelAnimationFrame(loopRafRef.current);
+    const tick = () => {
+      const ws = wavesurferRef.current;
+      const region = regionRef.current;
+      if (!ws || !region || !ws.isPlaying()) {
+        loopRafRef.current = null;
+        return;
+      }
+      if (ws.getCurrentTime() >= region.end) {
+        ws.setTime(region.start);
+      }
+      loopRafRef.current = requestAnimationFrame(tick);
+    };
+    loopRafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  const handleApplyTrim = useCallback(() => {
+    const buf = audioBufferRef.current;
+    const region = regionRef.current;
+    if (!buf || !region) return;
+    const { start, end } = region;
+    if (end - start < 0.001) return;
+    const sr = buf.sampleRate;
+    const startSample = Math.round(start * sr);
+    const endSample = Math.round(end * sr);
+    const length = endSample - startSample;
+    if (length <= 0) return;
+    const trimmed = new AudioBuffer({ length, sampleRate: sr, numberOfChannels: buf.numberOfChannels });
+    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+      trimmed.copyToChannel(buf.getChannelData(ch).slice(startSample, endSample), ch);
+    }
+    onApplyTrimRef.current?.(trimmed);
+  }, []);
+
   const wireRegionEvents = useCallback((
     region: ReturnType<RegionsPlugin['addRegion']>,
     buffer: AudioBuffer,
@@ -459,7 +511,10 @@ export default function WaveformEditor({
           programmaticPauseRef.current = false;
         }
         ws.seekTo(region.start / ws.getDuration());
-        if (wasPlaying) region.play();
+        if (wasPlaying) {
+          region.play();
+          startLoopRaf();
+        }
       }
 
       // Close zoom when the handle is released
@@ -470,7 +525,7 @@ export default function WaveformEditor({
         setZoomState(null);
       }
     });
-  }, [stopScrub]);
+  }, [stopScrub, startLoopRaf]);
 
   const addRegion = useCallback((
     start: number,
@@ -632,27 +687,29 @@ export default function WaveformEditor({
       });
 
       // 'pause' fires when region.play() hits region.end OR the user pauses.
-      // If we're still in "playing" state and the cursor is at/near the region
-      // end, treat it as a natural region end and loop back to region.start.
-      // programmaticPauseRef suppresses this logic during intentional seeks.
+      // If the rAF didn't win the race against WaveSurfer's timeupdate-based stop,
+      // we land here: detect it by currentTime being at/near region.end and loop.
       ws.on('pause', () => {
         if (programmaticPauseRef.current) return;
         const region = regionRef.current;
         if (isPlayingRef.current && region && ws.getCurrentTime() >= region.end - 0.1) {
-          region.play(); // loop
+          region.play(); // fallback — slight gap if rAF lost the race
+          startLoopRaf();
           return;
         }
+        stopLoopRaf();
         onPlayingChangeRef.current(false);
       });
 
-      // 'finish' fires if the file plays to its absolute end (e.g. region.end
-      // equals the file duration). Loop the same way.
+      // 'finish' fires when the file plays to its absolute end.
       ws.on('finish', () => {
         const region = regionRef.current;
         if (isPlayingRef.current && region) {
-          region.play(); // loop
+          region.play();
+          startLoopRaf();
           return;
         }
+        stopLoopRaf();
         onPlayingChangeRef.current(false);
       });
 
@@ -679,7 +736,9 @@ export default function WaveformEditor({
       // Clear ALL regions (clearRegions covers orphans the ref may have missed)
       regions.clearRegions();
       regionRef.current = null;
-      setReady(false);
+      // Use isUpdating (not setReady(false)) so the trim-label / apply-trim
+      // containers keep their height — no layout shift while FX processes.
+      setIsUpdating(true);
 
       const unsub = ws.on('ready', () => {
         // Self-unsubscribe: removes this listener from WaveSurfer so it fires
@@ -689,7 +748,7 @@ export default function WaveformEditor({
         readyUnsubRef.current = null;
         const clampedEnd = Math.min(savedEnd, ws.getDuration());
         addRegion(savedStart, clampedEnd, regions, ws, audioBuffer);
-        setReady(true);
+        setIsUpdating(false);
         if (clampedEnd !== savedEnd) onTrimChangeRef.current(savedStart, clampedEnd);
       });
       readyUnsubRef.current = unsub as unknown as () => void;
@@ -701,28 +760,30 @@ export default function WaveformEditor({
   // ── Unmount cleanup ──────────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
+      stopLoopRaf();
       wavesurferRef.current?.destroy();
       wavesurferRef.current = null;
       stopScrub();
       scrubCtxRef.current?.close();
       scrubCtxRef.current = null;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [stopLoopRaf, stopScrub]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Sync play/pause ──────────────────────────────────────────────────────────
   useEffect(() => {
     const ws = wavesurferRef.current;
     const region = regionRef.current;
-    if (!ws || !ready) return;
+    if (!ws || !ready || isUpdating) return;
 
     if (isPlaying && !ws.isPlaying()) {
-      if (region) region.play();
+      if (region) { region.play(); startLoopRaf(); }
       else ws.play();
     } else if (!isPlaying && ws.isPlaying()) {
+      stopLoopRaf();
       ws.pause();
       if (ws.getDuration() > 0 && region) ws.seekTo(region.start / ws.getDuration());
     }
-  }, [isPlaying, ready]);
+  }, [isPlaying, ready, isUpdating, startLoopRaf, stopLoopRaf]);
 
   // ── Render ───────────────────────────────────────────────────────────────────
   const duration = audioBuffer?.duration ?? 1;
@@ -783,51 +844,65 @@ export default function WaveformEditor({
 
         <div
           ref={containerRef}
-          className="overflow-hidden rounded-lg bg-cw-surface"
-          style={{ minHeight: '80px' }}
+          className="overflow-hidden rounded-lg bg-cw-surface transition-opacity duration-200"
+          style={{ minHeight: '80px', opacity: isUpdating ? 0.45 : 1 }}
         />
       </div>
 
-      {/* Trim time labels */}
-      {ready && (
-        <div className="relative mt-1 h-5">
-          {labelsCollide ? (
-            /* Handles too close — single dash at midpoint */
-            <span
-              className="absolute -translate-x-1/2 font-mono text-[10px] text-cw-timestamp select-none"
-              style={{ left: `${midLabelPx}px` }}
+      {/* Trim time labels — outer div always rendered to hold its h-5 height */}
+      <div className="relative mt-1 h-5">
+        {ready && (labelsCollide ? (
+          /* Handles too close — single dash at midpoint */
+          <span
+            className="absolute -translate-x-1/2 font-mono text-[10px] text-cw-timestamp select-none"
+            style={{ left: `${midLabelPx}px` }}
+          >
+            –
+          </span>
+        ) : (
+          <>
+            <EditableTrimTime
+              value={displayStart}
+              min={0}
+              max={displayEnd - 0.001}
+              anchor="start"
+              style={{
+                left: containerW > 0 ? `${rawLeftPx}px` : `${startPct}%`,
+              }}
+              onCommit={(v) => {
+                onTrimChangeRef.current(v, displayEnd);
+                regionRef.current?.setOptions({ start: v });
+              }}
+            />
+            <EditableTrimTime
+              value={displayEnd}
+              min={displayStart + 0.001}
+              max={duration}
+              anchor="end"
+              style={{
+                left: containerW > 0 ? `${rawRightPx}px` : `${endPct}%`,
+              }}
+              onCommit={(v) => {
+                onTrimChangeRef.current(displayStart, v);
+                regionRef.current?.setOptions({ end: v });
+              }}
+            />
+          </>
+        ))}
+      </div>
+
+      {/* Apply trim button — wrapper always rendered to reserve its height */}
+      {onApplyTrim && (
+        <div className="mt-1.5 flex min-h-[22px] justify-center">
+          {ready && (displayEnd - displayStart) < (duration - 0.001) && (
+            <button
+              onClick={handleApplyTrim}
+              title="Replace audio with the trimmed region"
+              className="flex items-center gap-1 rounded px-2.5 py-0.5 text-[10px] text-cw-action ring-1 ring-cw-action/30 transition-colors hover:bg-cw-action/10 hover:ring-cw-action/60 active:bg-cw-action/20"
             >
-              –
-            </span>
-          ) : (
-            <>
-              <EditableTrimTime
-                value={displayStart}
-                min={0}
-                max={displayEnd - 0.001}
-                anchor="start"
-                style={{
-                  left: containerW > 0 ? `${rawLeftPx}px` : `${startPct}%`,
-                }}
-                onCommit={(v) => {
-                  onTrimChangeRef.current(v, displayEnd);
-                  regionRef.current?.setOptions({ start: v });
-                }}
-              />
-              <EditableTrimTime
-                value={displayEnd}
-                min={displayStart + 0.001}
-                max={duration}
-                anchor="end"
-                style={{
-                  left: containerW > 0 ? `${rawRightPx}px` : `${endPct}%`,
-                }}
-                onCommit={(v) => {
-                  onTrimChangeRef.current(displayStart, v);
-                  regionRef.current?.setOptions({ end: v });
-                }}
-              />
-            </>
+              <span aria-hidden>✂</span>
+              Apply trim
+            </button>
           )}
         </div>
       )}

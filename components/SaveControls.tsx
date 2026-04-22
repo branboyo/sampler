@@ -14,11 +14,11 @@ export default function SaveControls({
   disabled,
 }: SaveControlsProps) {
   return (
-    <div data-testid="save-controls" className="flex gap-2 px-4">
+    <div data-testid="save-controls" className="flex gap-2 px-4 py-3">
       <select
         value={format}
         onChange={(e) => onFormatChange(e.target.value as AudioFormat)}
-        className="w-[70px] shrink-0 rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-300"
+        className="w-[72px] shrink-0 cursor-pointer appearance-none rounded-lg border border-cw-border bg-cw-surface px-2.5 py-2 text-xs text-cw-text-primary"
       >
         <option value="wav">WAV</option>
         <option value="mp3">MP3</option>
@@ -26,7 +26,7 @@ export default function SaveControls({
       <button
         onClick={onSave}
         disabled={disabled}
-        className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-blue-600 py-2 text-xs font-semibold text-white disabled:opacity-50"
+        className="cw-pressable flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-cw-action-bold py-2 text-xs font-semibold text-white shadow-md shadow-cw-action-bold/20 hover:bg-cw-action hover:shadow-[0_0_20px_rgba(99,102,241,0.45)] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
       >
         <svg
           width="14"

@@ -1,1 +1,197 @@
 @import "tailwindcss";
+
+@theme {
+  --color-cw-bg: #0a0c14;
+  --color-cw-surface: #111427;
+  --color-cw-elevated: #1a1d33;
+  --color-cw-border: #252940;
+  --color-cw-text-primary: #e0e2ef;
+  --color-cw-text-secondary: #6e7191;
+  --color-cw-recording: #c084fc;
+  --color-cw-recording-bold: #a855f7;
+  --color-cw-action: #818cf8;
+  --color-cw-action-bold: #6366f1;
+  --color-cw-timestamp: #67e8f9;
+  --color-cw-success: #6ee7b7;
+  --color-cw-success-bold: #34d399;
+  --color-cw-error: #f472b6;
+
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ── Custom easing ─────────────────────────────────────────────────────────── */
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* ── Pressable — physical press feedback on interactive elements ────────────
+   Use in place of `transition-colors` on buttons. Covers all common transition
+   properties plus adds the scale-on-active.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.cw-pressable {
+  transition:
+    transform 120ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    opacity 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+}
+
+.cw-pressable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── Icon swap animation ──────────────────────────────────────────────────────
+   Give icon containers this class + a React `key` so they remount when the
+   icon changes, replaying the animation.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+@keyframes cw-icon-in {
+  from {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cw-icon {
+  animation: cw-icon-in 140ms var(--ease-out) both;
+}
+
+/* ── Chevron rotation ─────────────────────────────────────────────────────── */
+
+.cw-chevron {
+  transition: transform 200ms var(--ease-out);
+}
+
+/* ── Card enter (FX chain items, etc.) ───────────────────────────────────── */
+
+.cw-card-enter {
+  opacity: 1;
+  transform: translateY(0);
+  /* Include bg/border/shadow so this class replaces Tailwind transition-* on cards */
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* ── Popover enter (AddFxPicker, etc.) ────────────────────────────────────── */
+
+.cw-popover-enter {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transform-origin: top right;
+  transition: opacity 150ms var(--ease-out), transform 150ms var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.94) translateY(-4px);
+  }
+}
+
+/* ── Banner enter (error / save message notifications) ───────────────────── */
+
+.cw-banner-enter {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+
+/* ── Library list stagger ─────────────────────────────────────────────────── */
+/* Uses @keyframes (not @starting-style + transition) so hover transitions
+   on the same element remain unaffected.                                     */
+
+@keyframes cw-list-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cw-list-stagger {
+  /* Cap delay at item 5 so long lists don't feel sluggish */
+  animation: cw-list-in 220ms var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 5) * 35ms);
+}
+
+/* ── Recording dot pulse ──────────────────────────────────────────────────── */
+
+@keyframes cw-pulse-rec {
+  0%, 100% { opacity: 1;    box-shadow: 0 0 0 0   rgba(192, 132, 252, 0.7); }
+  60%       { opacity: 0.75; box-shadow: 0 0 0 5px rgba(192, 132, 252, 0);   }
+}
+
+.pulse-recording {
+  animation: cw-pulse-rec 1.5s ease-in-out infinite;
+}
+
+/* ── Sonar rings — expand outward from RecordButton while recording ───────── */
+
+@keyframes cw-sonar-out {
+  0%   { transform: scale(1);   opacity: 0.45; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+.cw-sonar-ring {
+  background: rgba(168, 85, 247, 0.2);
+  animation: cw-sonar-out 2.4s var(--ease-out) infinite;
+  animation-delay: var(--ring-delay, 0s);
+  pointer-events: none;
+}
+
+/* ── Playing ring — breathing glow around PlaybackControls while playing ──── */
+
+@keyframes cw-playing-breathe {
+  0%, 100% { transform: scale(1);   opacity: 0.5; }
+  50%       { transform: scale(1.8); opacity: 0; }
+}
+
+.cw-playing-ring {
+  background: rgba(99, 102, 241, 0.35);
+  animation: cw-playing-breathe 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Section enter — animate in when app transitions between states ─────────  */
+
+@keyframes cw-section-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cw-section-enter {
+  animation: cw-section-in 300ms var(--ease-out) both;
+}
+
+/* ── Recording timer glow ─────────────────────────────────────────────────── */
+
+.cw-timer-glow {
+  text-shadow:
+    0 0 24px rgba(192, 132, 252, 0.85),
+    0 0 56px rgba(192, 132, 252, 0.4);
+}

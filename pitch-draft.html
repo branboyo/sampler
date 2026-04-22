@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChromeWave — Pitch FX Draft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cw-bg: #0a0c14;
+      --cw-surface: #111427;
+      --cw-elevated: #1a1d33;
+      --cw-border: #252940;
+      --cw-text-primary: #e0e2ef;
+      --cw-text-secondary: #6e7191;
+      --cw-action: #818cf8;
+      --cw-action-bold: #6366f1;
+      --cw-timestamp: #67e8f9;
+      --cw-recording: #c084fc;
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--cw-bg);
+      font-family: var(--font-ui);
+      color: var(--cw-text-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    h2 {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cw-text-secondary);
+      text-align: center;
+    }
+
+    /* ── FX Card ── */
+    .fx-card {
+      width: 300px;
+      border-radius: 10px;
+      border: 1px solid rgba(99,102,241,0.35);
+      background: var(--cw-surface);
+      overflow: hidden;
+    }
+
+    /* ── Card header ── */
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+    }
+
+    .drag-handle {
+      color: var(--cw-text-secondary);
+      cursor: grab;
+    }
+
+    .enabled-dot {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--cw-action-bold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; color: white;
+      flex-shrink: 0;
+    }
+
+    .card-label {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--cw-text-primary);
+    }
+
+    .chevron { color: var(--cw-text-secondary); transform: rotate(180deg); }
+    .delete-btn { color: var(--cw-text-secondary); opacity: 0; transition: opacity 0.15s; }
+    .fx-card:hover .delete-btn { opacity: 1; }
+
+    /* ── Card body ── */
+    .card-body {
+      border-top: 1px solid rgba(37,41,64,0.7);
+      padding: 16px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* ── Knob ── */
+    .knob-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .knob-svg { display: block; }
+
+    .knob-value {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cw-timestamp);
+      letter-spacing: -0.03em;
+      text-align: center;
+    }
+
+    .knob-unit {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--cw-text-secondary);
+      margin-left: 2px;
+    }
+
+    /* ── Range pills ── */
+    .range-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .range-label {
+      font-size: 10px;
+      color: var(--cw-text-secondary);
+      letter-spacing: 0.05em;
+    }
+
+    .range-pills {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pill {
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid var(--cw-border);
+      background: transparent;
+      color: var(--cw-text-secondary);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .pill:hover {
+      border-color: var(--cw-action);
+      color: var(--cw-action);
+    }
+
+    .pill.active {
+      border-color: var(--cw-action-bold);
+      background: rgba(99,102,241,0.15);
+      color: var(--cw-action);
+    }
+
+    /* ── Fine-tune slider ── */
+    .fine-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .fine-label {
+      width: 60px;
+      flex-shrink: 0;
+      font-size: 10px;
+      color: var(--cw-text-secondary);
+    }
+
+    .cw-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--cw-border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .cw-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--cw-action-bold);
+      cursor: pointer;
+    }
+
+    .fine-val {
+      width: 40px;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cw-timestamp);
+    }
+
+    /* ── Annotations ── */
+    .annotation {
+      width: 300px;
+      background: rgba(26,29,51,0.6);
+      border: 1px solid var(--cw-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 11px;
+      line-height: 1.7;
+      color: var(--cw-text-secondary);
+    }
+
+    .annotation b { color: var(--cw-text-primary); }
+    .annotation code {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cw-timestamp);
+      background: rgba(103,232,249,0.07);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .annotation ul { padding-left: 16px; margin-top: 4px; }
+    .annotation li { margin: 2px 0; }
+  </style>
+</head>
+<body>
+
+  <h2>ChromeWave — Pitch Shift FX · UI Draft</h2>
+
+  <!-- ── CARD ── -->
+  <div class="fx-card">
+    <!-- Header -->
+    <div class="card-header">
+      <div class="drag-handle">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <circle cx="4" cy="3" r="1.2"/><circle cx="8" cy="3" r="1.2"/>
+          <circle cx="4" cy="6" r="1.2"/><circle cx="8" cy="6" r="1.2"/>
+          <circle cx="4" cy="9" r="1.2"/><circle cx="8" cy="9" r="1.2"/>
+        </svg>
+      </div>
+      <div class="enabled-dot">●</div>
+      <span class="card-label">Pitch Shift</span>
+      <div class="chevron">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="3,5 6,8 9,5"/>
+        </svg>
+      </div>
+      <button class="delete-btn">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="card-body">
+
+      <!-- Knob -->
+      <div class="knob-area">
+        <svg class="knob-svg" width="84" height="84" viewBox="0 0 84 84">
+          <!-- Track arc (225° → 315°, i.e. 270° span) -->
+          <circle cx="42" cy="42" r="33" fill="none" stroke="#252940" stroke-width="5"/>
+          <!-- "Groove" arc -->
+          <path
+            d="M 12.6 65.9 A 33 33 0 1 1 71.4 65.9"
+            fill="none" stroke="#1a1d33" stroke-width="5"
+            stroke-linecap="round"
+          />
+          <!-- Value arc (positive shift → indigo, rendered via JS equivalent inline) -->
+          <!-- Showing +5 st out of ±12 range as example: 5/12 = 41.7% of 270° = 112.5° from center -->
+          <!-- Arc from 225° (left) to 225°+135°=360° → but positive side is right of center -->
+          <!-- Center is 270° (bottom). Positive goes clockwise from center. -->
+          <!-- Start = 270° = (42+33*cos(270°*π/180), 42+33*sin(270°*π/180)) = (42, 75) -->
+          <!-- +5/12 of 135° = 56.25° clockwise from bottom → end angle = 270°+56.25° = 326.25° -->
+          <path
+            id="value-arc"
+            d="M 42 75 A 33 33 0 0 1 68.7 58.8"
+            fill="none" stroke="#6366f1" stroke-width="5"
+            stroke-linecap="round"
+          />
+          <!-- Knob face -->
+          <circle cx="42" cy="42" r="26" fill="#111427" stroke="#252940" stroke-width="1"/>
+          <!-- Indicator dot — at +5/12 → 270°+56.25°=326.25° on r=17 -->
+          <!-- x=42+17*cos(326.25°*π/180) = 42+17*0.830 = 56.1, y=42+17*sin(326.25°*π/180) = 42+17*(-0.556) = 32.5 -->
+          <circle id="indicator" cx="56.1" cy="32.5" r="2.5" fill="#67e8f9"/>
+        </svg>
+        <div class="knob-value">+5<span class="knob-unit">st</span></div>
+      </div>
+
+      <!-- Range selector -->
+      <div class="range-row">
+        <span class="range-label">Range</span>
+        <div class="range-pills">
+          <button class="pill">±1</button>
+          <button class="pill">±6</button>
+          <button class="pill active">±12</button>
+          <button class="pill">±24</button>
+        </div>
+      </div>
+
+      <!-- Fine tune slider -->
+      <div class="fine-row">
+        <span class="fine-label">Fine tune</span>
+        <input type="range" class="cw-slider" min="-100" max="100" value="0" />
+        <span class="fine-val">0¢</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Annotations ── -->
+  <div class="annotation">
+    <b>Interaction model</b>
+    <ul>
+      <li><b>Knob</b> — drag vertically (↑ = higher pitch). Click to reset to 0.</li>
+      <li><b>Range pills</b> — set semitone ceiling (±1 / ±6 / ±12 / ±24 st). Switches knob sensitivity without changing pitch.</li>
+      <li><b>Fine tune</b> — ±100 cents, same commit-on-release pattern as other FX sliders.</li>
+      <li>Processing fires on <code>pointerup</code> / <code>keyup</code> only (no live reprocessing).</li>
+    </ul>
+  </div>
+
+  <div class="annotation">
+    <b>Implementation note</b>
+    <ul>
+      <li>Uses <code>OfflineAudioContext</code> + phase-vocoder pitch shift (or playbackRate approximation for MVP).</li>
+      <li>New <code>FxType = 'pitch'</code>, params: <code>&#123; semitones: number; cents: number; range: 1|6|12|24 &#125;</code></li>
+      <li>Knob SVG arcs recalculated reactively from <code>semitones / range</code> ratio.</li>
+    </ul>
+  </div>
+
+  <!-- Interactive knob demo -->
+  <script>
+    // Simple interactive demo for the knob
+    const knobSvg = document.querySelector('.knob-svg');
+    const valueArc = document.getElementById('value-arc');
+    const indicator = document.getElementById('indicator');
+    const knobValueEl = document.querySelector('.knob-value');
+    const pills = document.querySelectorAll('.pill');
+    const fineSlider = document.querySelector('.cw-slider');
+    const fineVal = document.querySelector('.fine-val');
+
+    let range = 12;
+    let semitones = 5;
+
+    function polarToXY(angleDeg, r = 33, cx = 42, cy = 42) {
+      const rad = (angleDeg * Math.PI) / 180;
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    }
+
+    function updateKnob() {
+      const ratio = semitones / range; // -1 to 1
+      const CENTER_ANGLE = 270; // bottom
+      const HALF_SPAN = 135; // degrees each side
+
+      const endAngle = CENTER_ANGLE + ratio * HALF_SPAN;
+
+      const start = polarToXY(CENTER_ANGLE); // fixed at bottom
+      const end = polarToXY(endAngle);
+
+      const absAngle = Math.abs(ratio * HALF_SPAN);
+      const largeArc = absAngle > 180 ? 1 : 0;
+      const sweep = ratio >= 0 ? 1 : 0;
+
+      if (Math.abs(semitones) < 0.1) {
+        valueArc.setAttribute('d', `M ${start.x} ${start.y} A 33 33 0 0 1 ${start.x+0.01} ${start.y}`);
+      } else {
+        valueArc.setAttribute('d',
+          `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A 33 33 0 ${largeArc} ${sweep} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
+        );
+      }
+
+      // Indicator dot on inner r=17
+      const dot = polarToXY(endAngle, 17);
+      indicator.setAttribute('cx', dot.x.toFixed(2));
+      indicator.setAttribute('cy', dot.y.toFixed(2));
+
+      // Color: positive = indigo, negative = purple/recording, zero = muted
+      const color = semitones > 0 ? '#6366f1' : semitones < 0 ? '#c084fc' : '#252940';
+      valueArc.setAttribute('stroke', color);
+
+      const sign = semitones > 0 ? '+' : '';
+      knobValueEl.innerHTML = `${sign}${semitones}<span class="knob-unit">st</span>`;
+    }
+
+    // Drag knob
+    let dragging = false;
+    let dragStartY = 0;
+    let dragStartSt = 0;
+
+    knobSvg.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      dragStartY = e.clientY;
+      dragStartSt = semitones;
+      knobSvg.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+
+    knobSvg.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dy = dragStartY - e.clientY; // up = positive
+      const delta = (dy / 80) * range;
+      semitones = Math.max(-range, Math.min(range, Math.round(dragStartSt + delta)));
+      updateKnob();
+    });
+
+    knobSvg.addEventListener('pointerup', () => { dragging = false; });
+
+    // Double click to reset
+    knobSvg.addEventListener('dblclick', () => { semitones = 0; updateKnob(); });
+
+    // Pills
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const text = pill.textContent.trim(); // e.g. "±12"
+        range = parseInt(text.replace('±', ''));
+        semitones = Math.max(-range, Math.min(range, semitones));
+        updateKnob();
+      });
+    });
+
+    // Fine slider
+    fineSlider.addEventListener('input', (e) => {
+      fineVal.textContent = `${e.target.value > 0 ? '+' : ''}${e.target.value}¢`;
+    });
+
+    updateKnob();
+  </script>
+
+</body>
+</html>

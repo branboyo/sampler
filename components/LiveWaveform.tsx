@@ -6,7 +6,14 @@ interface LiveWaveformProps {
 
 const BAR_WIDTH = 3;
 const BAR_GAP = 2;
-const BAR_COLOR = '#ef4444';
+
+// Interpolate between cw-recording (#c084fc) and cw-timestamp (#67e8f9) by amplitude
+function barColor(value: number): string {
+  const r = Math.round(192 + (103 - 192) * value); // 192 → 103
+  const g = Math.round(132 + (232 - 132) * value); // 132 → 232
+  const b = Math.round(252 + (249 - 252) * value); // 252 → 249
+  return `rgb(${r},${g},${b})`;
+}
 
 export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -32,6 +39,7 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
 
       const width = rect.width;
       const height = rect.height;
+      const centerY = height / 2;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -40,22 +48,38 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
       const barCount = Math.floor(width / (BAR_WIDTH + BAR_GAP));
       const step = Math.max(1, Math.floor(dataArray.length / barCount));
 
+      // Draw a faint center baseline
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = '#6e7191';
+      ctx.fillRect(0, centerY - 0.5, width, 1);
+      ctx.globalAlpha = 1;
+
       for (let i = 0; i < barCount; i++) {
         const value = dataArray[i * step] / 255;
-        const barHeight = Math.max(2, value * height * 0.85);
+        const halfH = Math.max(1.5, value * (height / 2) * 0.88);
         const x = i * (BAR_WIDTH + BAR_GAP);
-        const y = (height - barHeight) / 2;
 
-        // Fade: older bars (left) are dimmer
-        const opacity = 0.3 + 0.7 * (i / barCount);
+        // Left bars are dimmer (scrolling time illusion)
+        const opacity = 0.28 + 0.72 * (i / barCount);
+        const color = barColor(value);
 
-        ctx.fillStyle = BAR_COLOR;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 6 + value * 10;
+        ctx.fillStyle = color;
         ctx.globalAlpha = opacity;
+
+        // Upper half — rounded at top
         ctx.beginPath();
-        ctx.roundRect(x, y, BAR_WIDTH, barHeight, 1);
+        ctx.roundRect(x, centerY - halfH, BAR_WIDTH, halfH, [1, 1, 0, 0]);
+        ctx.fill();
+
+        // Lower half — rounded at bottom (1px gap at center for definition)
+        ctx.beginPath();
+        ctx.roundRect(x, centerY + 1, BAR_WIDTH, halfH - 1, [0, 0, 1, 1]);
         ctx.fill();
       }
 
+      ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
     };
 
@@ -70,7 +94,7 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
     <div data-testid="live-waveform" className="px-4">
       <canvas
         ref={canvasRef}
-        className="h-24 w-full rounded-md bg-gray-900"
+        className="h-[100px] w-full rounded-lg bg-transparent"
       />
     </div>
   );

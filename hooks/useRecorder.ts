@@ -3,10 +3,12 @@ import type { RecordingState, ExtensionMessage } from '@/types';
 import { PORT_NAME } from '@/lib/messaging';
 import { startMediaStream, createRecorder, collectChunks, stopRecorder } from '@/lib/recorder';
 
+const MAX_DURATION = 300; // 5 minutes, not configurable
+
 const INITIAL_STATE: RecordingState = {
   status: 'idle',
   elapsed: 0,
-  maxDuration: 300,
+  maxDuration: MAX_DURATION,
   streamId: null,
 };
 
@@ -14,6 +16,7 @@ export function useRecorder() {
   const [state, setState] = useState<RecordingState>(INITIAL_STATE);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const blobPromiseRef = useRef<Promise<Blob> | null>(null);
@@ -36,13 +39,16 @@ export function useRecorder() {
     };
   }, [clearTimer]);
 
-  const startRecording = useCallback(async (maxDuration: number) => {
+  const startRecording = useCallback(async () => {
+    setError(null);
     try {
+      console.log('[ChromeWave] startRecording called, connecting to background...');
       // Connect to background and request tab capture
       const port = browser.runtime.connect({ name: PORT_NAME });
 
       const streamId = await new Promise<string>((resolve, reject) => {
         port.onMessage.addListener((msg: ExtensionMessage) => {
+          console.log('[ChromeWave] Received message from background:', msg);
           if (msg.type === 'CAPTURE_STARTED') {
             resolve(msg.payload?.streamId as string);
           } else if (msg.type === 'CAPTURE_ERROR') {
@@ -50,10 +56,14 @@ export function useRecorder() {
           }
         });
         port.postMessage({ type: 'START_CAPTURE' });
+        console.log('[ChromeWave] Sent START_CAPTURE to background');
       });
+
+      console.log('[ChromeWave] Got streamId:', streamId);
 
       // Get the media stream from the stream ID
       const stream = await startMediaStream(streamId);
+      console.log('[ChromeWave] Got media stream, tracks:', stream.getTracks().length);
 
       // Set up AudioContext + AnalyserNode for live waveform
       const audioCtx = new AudioContext();
@@ -61,6 +71,8 @@ export function useRecorder() {
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 256;
       source.connect(analyser);
+      // Pass audio through to speakers so the user hears it while recording
+      analyser.connect(audioCtx.destination);
       audioCtxRef.current = audioCtx;
       setAnalyserNode(analyser);
 
@@ -74,7 +86,7 @@ export function useRecorder() {
       setState({
         status: 'recording',
         elapsed: 0,
-        maxDuration,
+        maxDuration: MAX_DURATION,
         streamId,
       });
 
@@ -89,8 +101,11 @@ export function useRecorder() {
         });
       }, 100);
     } catch (err) {
-      console.error('[Flih] Recording failed:', err);
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[ChromeWave] Recording failed:', message);
+      setError(message);
       setState(INITIAL_STATE);
+      throw err; // Re-throw so App.tsx can catch it
     }
   }, [clearTimer]);
 
@@ -115,5 +130,5 @@ export function useRecorder() {
     setState(INITIAL_STATE);
   }, [clearTimer]);
 
-  return { state, startRecording, stopRecording, audioBlob, analyserNode };
+  return { state, startRecording, stopRecording, audioBlob, analyserNode, error };
 }
