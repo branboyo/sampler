@@ -10,6 +10,7 @@ export default defineConfig({
   },
   test: {
     environment: 'happy-dom',
+    setupFiles: ['./tests/helpers/setup.ts'],
     include: ['**/*.test.ts'],
     exclude: ['node_modules', '.output', '.wxt', '.claude'],
   },
