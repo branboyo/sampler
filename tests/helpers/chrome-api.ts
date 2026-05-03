@@ -12,8 +12,16 @@ export function createMockStorage(): StorageArea {
 
   return {
     data,
-    get: vi.fn(async (keys: string | string[] | null) => {
+    get: vi.fn(async (keys: string | string[] | Record<string, unknown> | null) => {
       if (keys === null) return { ...data };
+      if (typeof keys === 'object' && !Array.isArray(keys)) {
+        // Record<string, unknown> form — values are defaults for missing keys
+        const result: Record<string, unknown> = {};
+        for (const [k, defaultVal] of Object.entries(keys)) {
+          result[k] = k in data ? data[k] : defaultVal;
+        }
+        return result;
+      }
       const keyList = typeof keys === 'string' ? [keys] : keys;
       const result: Record<string, unknown> = {};
       for (const k of keyList) {
@@ -48,6 +56,7 @@ export function installBrowserMock() {
       connect: vi.fn(() => ({
         name: 'sampler-port',
         postMessage: vi.fn(),
+        disconnect: vi.fn(),
         onMessage: { addListener: vi.fn() },
         onDisconnect: { addListener: vi.fn() },
       })),
