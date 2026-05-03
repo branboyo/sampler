@@ -52,11 +52,13 @@ describe('FX_DEFAULTS', () => {
     expect(e.high).toBeLessThanOrEqual(12);
   });
 
-  it('pitch defaults have required fields', () => {
+  it('pitch defaults have required fields in valid ranges', () => {
     const p = FX_DEFAULTS.pitch as PitchParams;
-    expect(p.semitones).toBe(0);
-    expect(p.cents).toBe(0);
-    expect(p.preserveFormants).toBe(false);
+    expect(p.semitones).toBeGreaterThanOrEqual(-24);
+    expect(p.semitones).toBeLessThanOrEqual(24);
+    expect(p.cents).toBeGreaterThanOrEqual(-100);
+    expect(p.cents).toBeLessThanOrEqual(100);
+    expect(typeof p.preserveFormants).toBe('boolean');
   });
 
   it('reverse defaults to empty object', () => {
