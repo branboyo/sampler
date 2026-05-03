@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { forceCloseDatabase } from 'fake-indexeddb';
 import { installBrowserMock } from '@/tests/helpers/chrome-api';
 import {
   DEFAULT_SETTINGS,
@@ -13,6 +14,24 @@ import {
   deleteAudioBlob,
 } from './storage';
 import type { RecordingMeta } from '@/types';
+
+async function resetIndexedDB(): Promise<void> {
+  // Force-close any open connections left by the storage module so that
+  // deleteDatabase is not blocked by lingering IDBDatabase handles.
+  const factory = indexedDB as unknown as { _databases: Map<string, { connections: IDBDatabase[] }> };
+  const db = factory._databases.get('sampler-db');
+  if (db) {
+    for (const conn of db.connections) {
+      forceCloseDatabase(conn);
+    }
+  }
+  await new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase('sampler-db');
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => resolve(); // ignore blocked — DB will be deleted on next open
+  });
+}
 
 describe('settings', () => {
   beforeEach(() => {
@@ -95,6 +114,10 @@ describe('recording metadata', () => {
 });
 
 describe('audio blob storage (IndexedDB)', () => {
+  beforeEach(async () => {
+    await resetIndexedDB();
+  });
+
   it('saveAudioBlob and getAudioBlob round-trip', async () => {
     const blob = new Blob(['test audio data'], { type: 'audio/webm' });
     await saveAudioBlob('blob-1', blob);
@@ -118,8 +141,9 @@ describe('audio blob storage (IndexedDB)', () => {
 });
 
 describe('deleteRecording', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     installBrowserMock();
+    await resetIndexedDB();
   });
 
   it('removes both metadata and audio blob', async () => {
