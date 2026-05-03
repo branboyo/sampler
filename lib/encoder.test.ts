@@ -60,8 +60,8 @@ describe('encodeWav', () => {
     expect(view.getInt16(44, true)).toBe(0);          // 0.0
     expect(view.getInt16(46, true)).toBe(0x7FFF);     // 1.0 -> 32767
     expect(view.getInt16(48, true)).toBe(-0x8000);    // -1.0 -> -32768
-    expect(view.getInt16(50, true)).toBeCloseTo(0x7FFF * 0.5, -2); // ~16383
-    expect(view.getInt16(52, true)).toBeCloseTo(-0x8000 * 0.5, -2); // ~-16384
+    expect(view.getInt16(50, true)).toBe(16383);   // 0.5 * 0x7FFF = 16383.5, truncated to 16383
+    expect(view.getInt16(52, true)).toBe(-16384);  // -0.5 * 0x8000 = -16384
   });
 
   it('interleaves stereo channels', async () => {
