@@ -13,6 +13,7 @@ interface WaveformEditorProps {
   onTrimChange: (start: number, end: number) => void;
   onPlayingChange: (playing: boolean) => void;
   onApplyTrim?: (newBuffer: AudioBuffer) => void;
+  onTimeUpdate?: (time: number) => void;
 }
 
 // ── Zoom state ────────────────────────────────────────────────────────────────
@@ -168,6 +169,7 @@ export default function WaveformEditor({
   onTrimChange,
   onPlayingChange,
   onApplyTrim,
+  onTimeUpdate,
 }: WaveformEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
@@ -187,9 +189,11 @@ export default function WaveformEditor({
   const onTrimChangeRef = useRef(onTrimChange);
   const onPlayingChangeRef = useRef(onPlayingChange);
   const onApplyTrimRef = useRef(onApplyTrim);
+  const onTimeUpdateRef = useRef(onTimeUpdate);
   useEffect(() => { onTrimChangeRef.current = onTrimChange; }, [onTrimChange]);
   useEffect(() => { onPlayingChangeRef.current = onPlayingChange; }, [onPlayingChange]);
   useEffect(() => { onApplyTrimRef.current = onApplyTrim; }, [onApplyTrim]);
+  useEffect(() => { onTimeUpdateRef.current = onTimeUpdate; }, [onTimeUpdate]);
 
   // Mirror isPlaying prop in a ref so WaveSurfer event handlers can read it
   // without capturing a stale closure value.
@@ -227,6 +231,7 @@ export default function WaveformEditor({
   const holdTriggerRef = useRef<'canvas' | 'start' | 'end' | null>(null);
   const holdOriginRef = useRef<{ x: number; y: number } | null>(null);
   const zoomActiveRef = useRef(false);
+  const cursorDragRef = useRef(false);
 
   // Callback ref: draw as soon as the canvas mounts
   const zoomCanvasCallbackRef = useCallback(
@@ -273,6 +278,20 @@ export default function WaveformEditor({
       }
     };
 
+    const seekToPointer = (e: PointerEvent) => {
+      const ws = wavesurferRef.current;
+      const region = regionRef.current;
+      if (!ws || !region) return;
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const w = rect.width;
+      const dur = ws.getDuration();
+      if (dur <= 0 || w <= 0) return;
+      const time = Math.max(region.start, Math.min(region.end, (x / w) * dur));
+      ws.seekTo(time / dur);
+      onTimeUpdateRef.current?.(time);
+    };
+
     const onPointerDown = (e: PointerEvent) => {
       const ws = wavesurferRef.current;
       const region = regionRef.current;
@@ -303,18 +322,37 @@ export default function WaveformEditor({
       holdOriginRef.current = { x, y };
       cancelHold();
 
+      if (trigger === 'canvas') {
+        e.stopPropagation();
+        e.preventDefault();
+        container.setPointerCapture(e.pointerId);
+        cursorDragRef.current = true;
+        seekToPointer(e);
+      }
+
       const anchorPct = Math.max(0.1, Math.min(0.9, x / w));
       holdTimerRef.current = setTimeout(() => {
         holdTimerRef.current = null;
+        cursorDragRef.current = false;
         zoomActiveRef.current = true;
         setZoomState({ trigger, centerSec, anchorPct });
       }, HOLD_MS);
     };
 
     const onPointerMove = (e: PointerEvent) => {
+      if (cursorDragRef.current && !zoomActiveRef.current) {
+        seekToPointer(e);
+        if (holdTimerRef.current && holdOriginRef.current) {
+          const rect = container.getBoundingClientRect();
+          const dx = (e.clientX - rect.left) - holdOriginRef.current.x;
+          const dy = (e.clientY - rect.top) - holdOriginRef.current.y;
+          if (Math.sqrt(dx * dx + dy * dy) > CANVAS_CANCEL_PX) cancelHold();
+        }
+        return;
+      }
+
       if (!zoomActiveRef.current) {
-        // Cancel canvas hold if pointer moved too far before timer fires
-        if (holdTimerRef.current && holdTriggerRef.current === 'canvas' && holdOriginRef.current) {
+        if (holdTimerRef.current && holdTriggerRef.current !== 'canvas' && holdOriginRef.current) {
           const rect = container.getBoundingClientRect();
           const dx = (e.clientX - rect.left) - holdOriginRef.current.x;
           const dy = (e.clientY - rect.top) - holdOriginRef.current.y;
@@ -336,19 +374,25 @@ export default function WaveformEditor({
         const anchorPct = Math.max(0.1, Math.min(0.9, x / w));
         setZoomState((prev) => prev ? { ...prev, centerSec: sec, anchorPct } : null);
       }
-      // Handle triggers: centerSec updated via region 'update' event below
     };
 
-    const onPointerUp = () => closeZoom();
-    const onPointerLeave = () => closeZoom();
+    const onPointerUp = () => {
+      cursorDragRef.current = false;
+      closeZoom();
+    };
+    const onPointerLeave = () => {
+      if (!cursorDragRef.current) closeZoom();
+    };
 
-    container.addEventListener('pointerdown', onPointerDown);
+    container.addEventListener('pointerdown', onPointerDown, true);
+    container.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
     container.addEventListener('pointerleave', onPointerLeave);
 
     return () => {
-      container.removeEventListener('pointerdown', onPointerDown);
+      container.removeEventListener('pointerdown', onPointerDown, true);
+      container.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       container.removeEventListener('pointerleave', onPointerLeave);
@@ -419,7 +463,9 @@ export default function WaveformEditor({
         loopRafRef.current = null;
         return;
       }
-      if (ws.getCurrentTime() >= region.end) {
+      const currentTime = ws.getCurrentTime();
+      onTimeUpdateRef.current?.(currentTime);
+      if (currentTime >= region.end) {
         ws.setTime(region.start);
       }
       loopRafRef.current = requestAnimationFrame(tick);
@@ -511,8 +557,9 @@ export default function WaveformEditor({
           programmaticPauseRef.current = false;
         }
         ws.seekTo(region.start / ws.getDuration());
+        onTimeUpdateRef.current?.(region.start);
         if (wasPlaying) {
-          region.play();
+          ws.play();
           startLoopRaf();
         }
       }
@@ -654,8 +701,6 @@ export default function WaveformEditor({
         barRadius: 1,
         height: 80,
         normalize: true,
-        // interact: true (default) so play(0, end) isn't blocked when trimStart=0.
-        // User click-to-seek is intercepted and clamped below via 'interaction'.
         plugins: [regions],
       });
       wavesurferRef.current = ws;
@@ -669,6 +714,7 @@ export default function WaveformEditor({
         initFired = true;
         setReady(true);
         addRegion(trimStart, trimEnd, regions, ws, audioBuffer);
+        onTimeUpdateRef.current?.(trimStart);
       });
 
       // Clamp any user click-to-seek to within the trim region.
@@ -679,11 +725,13 @@ export default function WaveformEditor({
         if (programmaticSeek) return;
         const region = regionRef.current;
         if (!region) return;
-        if (newTime < region.start || newTime > region.end) {
+        const clamped = Math.max(region.start, Math.min(region.end, newTime));
+        if (Math.abs(clamped - newTime) > 0.001) {
           programmaticSeek = true;
-          ws.setTime(region.start);
+          ws.setTime(clamped);
           programmaticSeek = false;
         }
+        onTimeUpdateRef.current?.(clamped);
       });
 
       // 'pause' fires when region.play() hits region.end OR the user pauses.
@@ -749,6 +797,7 @@ export default function WaveformEditor({
         const clampedEnd = Math.min(savedEnd, ws.getDuration());
         addRegion(savedStart, clampedEnd, regions, ws, audioBuffer);
         setIsUpdating(false);
+        onTimeUpdateRef.current?.(savedStart);
         if (clampedEnd !== savedEnd) onTrimChangeRef.current(savedStart, clampedEnd);
       });
       readyUnsubRef.current = unsub as unknown as () => void;
@@ -776,12 +825,12 @@ export default function WaveformEditor({
     if (!ws || !ready || isUpdating) return;
 
     if (isPlaying && !ws.isPlaying()) {
-      if (region) { region.play(); startLoopRaf(); }
-      else ws.play();
+      ws.play();
+      if (region) startLoopRaf();
     } else if (!isPlaying && ws.isPlaying()) {
       stopLoopRaf();
       ws.pause();
-      if (ws.getDuration() > 0 && region) ws.seekTo(region.start / ws.getDuration());
+      onTimeUpdateRef.current?.(ws.getCurrentTime());
     }
   }, [isPlaying, ready, isUpdating, startLoopRaf, stopLoopRaf]);
 
@@ -852,13 +901,37 @@ export default function WaveformEditor({
       {/* Trim time labels — outer div always rendered to hold its h-5 height */}
       <div className="relative mt-1 h-5">
         {ready && (labelsCollide ? (
-          /* Handles too close — single dash at midpoint */
-          <span
-            className="absolute -translate-x-1/2 font-mono text-[10px] text-cw-timestamp select-none"
-            style={{ left: `${midLabelPx}px` }}
-          >
-            –
-          </span>
+          /* Handles close — show both times separated by a dash, centered between handles */
+          <>
+            <EditableTrimTime
+              value={displayStart}
+              min={0}
+              max={displayEnd - 0.001}
+              anchor="end"
+              style={{ left: `${midLabelPx - 4}px` }}
+              onCommit={(v) => {
+                onTrimChangeRef.current(v, displayEnd);
+                regionRef.current?.setOptions({ start: v });
+              }}
+            />
+            <span
+              className="absolute -translate-x-1/2 font-mono text-[10px] text-cw-timestamp select-none"
+              style={{ left: `${midLabelPx}px` }}
+            >
+              –
+            </span>
+            <EditableTrimTime
+              value={displayEnd}
+              min={displayStart + 0.001}
+              max={duration}
+              anchor="start"
+              style={{ left: `${midLabelPx + 4}px` }}
+              onCommit={(v) => {
+                onTrimChangeRef.current(displayStart, v);
+                regionRef.current?.setOptions({ end: v });
+              }}
+            />
+          </>
         ) : (
           <>
             <EditableTrimTime
