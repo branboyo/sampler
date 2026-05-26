@@ -9,6 +9,7 @@ import { useAudioEditor } from '@/hooks/useAudioEditor';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useSettings } from '@/hooks/useSettings';
 import { useFxChain } from '@/hooks/useFxChain';
+import { usePitchDetection } from '@/hooks/usePitchDetection';
 import RecordButton from '@/components/RecordButton';
 import RecordingTimer from '@/components/RecordingTimer';
 import LiveWaveform from '@/components/LiveWaveform';
@@ -18,6 +19,7 @@ import PlaybackControls from '@/components/PlaybackControls';
 import FileNameEditor from '@/components/FileNameEditor';
 import SaveControls from '@/components/SaveControls';
 import RecordingLibrary from '@/components/RecordingLibrary';
+import PitchDisplay from '@/components/PitchDisplay';
 
 const SamplerIcon = ({ isRecording }: { isRecording: boolean }) => (
   /* overflow="hidden" clips the SVG filter glow to the 16×16 viewport */
@@ -84,6 +86,8 @@ export default function App() {
   const library = useLibrary();
   const settings = useSettings();
   const fx = useFxChain(editor.state.audioBuffer);
+  const pitchBuffer = fx.processedBuffer ?? editor.state.audioBuffer;
+  const pitch = usePitchDetection(pitchBuffer);
 
   // Sync format preference from settings
   useEffect(() => {
@@ -290,15 +294,14 @@ export default function App() {
               editor.setTrimEnd(end);
             }}
             onPlayingChange={editor.setPlaying}
+            onTimeUpdate={pitch.updateTime}
             onApplyTrim={(newBuffer) => {
-              // newBuffer is already the FX-processed + trimmed slice from WaveformEditor.
-              // Replace the source audio, reset FX chain (FX is now baked in), and
-              // assign a new sourceKey so WaveformEditor reloads with the shorter clip.
               editor.replaceBuffer(newBuffer);
               fx.resetChain();
               setWaveformKey(crypto.randomUUID());
             }}
           />
+          <PitchDisplay pitch={pitch.currentPitch} />
           <PlaybackControls
             isPlaying={editor.state.isPlaying}
             onToggle={() => (editor.state.isPlaying ? editor.pause() : editor.play())}
