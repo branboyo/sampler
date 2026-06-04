@@ -5,43 +5,20 @@ interface RecordButtonProps {
 
 export default function RecordButton({ isRecording, onToggle }: RecordButtonProps) {
   return (
-    <div className="relative">
-      {/* Ambient glow blob — larger and brighter while recording */}
-      <div
-        className={`absolute inset-0 rounded-full blur-xl transition-[transform,opacity] duration-500 ${
-          isRecording
-            ? 'scale-[2] bg-cw-recording-bold/30'
-            : 'scale-150 bg-cw-recording-bold/20'
-        }`}
-      />
-
-      {/* Sonar rings — only visible while recording */}
-      {isRecording && (
-        <>
-          <div
-            className="cw-sonar-ring absolute inset-0 rounded-full"
-            style={{ '--ring-delay': '0s' } as React.CSSProperties}
-          />
-          <div
-            className="cw-sonar-ring absolute inset-0 rounded-full"
-            style={{ '--ring-delay': '0.8s' } as React.CSSProperties}
-          />
-          <div
-            className="cw-sonar-ring absolute inset-0 rounded-full"
-            style={{ '--ring-delay': '1.6s' } as React.CSSProperties}
-          />
-        </>
-      )}
-
+    <div className={`relative ${!isRecording ? 'pulse-idle-glow' : ''}`}>
       <button
         onClick={onToggle}
         data-testid="record-button"
-        className="cw-pressable relative flex h-16 w-16 items-center justify-center rounded-full bg-cw-recording-bold shadow-lg shadow-cw-recording-bold/30 cursor-pointer"
+        className={`cw-pressable relative flex items-center justify-center rounded-full cursor-pointer ${
+          isRecording
+            ? 'h-14 w-14 bg-cw-attention'
+            : 'h-16 w-16 bg-cw-primary'
+        }`}
       >
         {isRecording ? (
-          <div key="stop" className="cw-icon h-[18px] w-[18px] rounded-[3px] bg-white" />
+          <div key="stop" className="cw-icon h-4 w-4 rounded-[3px] bg-cw-bg" />
         ) : (
-          <div key="record" className="cw-icon h-6 w-6 rounded-full bg-white" />
+          <div key="record" className="cw-icon h-5 w-5 rounded-full bg-cw-bg" />
         )}
       </button>
     </div>

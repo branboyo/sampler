@@ -7,12 +7,9 @@ interface LiveWaveformProps {
 const BAR_WIDTH = 3;
 const BAR_GAP = 2;
 
-// Interpolate between cw-recording (#c084fc) and cw-timestamp (#67e8f9) by amplitude
-function barColor(value: number): string {
-  const r = Math.round(192 + (103 - 192) * value); // 192 → 103
-  const g = Math.round(132 + (232 - 132) * value); // 132 → 232
-  const b = Math.round(252 + (249 - 252) * value); // 252 → 249
-  return `rgb(${r},${g},${b})`;
+// Solid cw-primary (#eef5c5), opacity varies with amplitude (0.4 to 1.0)
+function barOpacity(value: number): number {
+  return 0.4 + 0.6 * value;
 }
 
 export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
@@ -49,10 +46,8 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
       const step = Math.max(1, Math.floor(dataArray.length / barCount));
 
       // Draw a faint center baseline
-      ctx.globalAlpha = 0.12;
-      ctx.fillStyle = '#6e7191';
+      ctx.fillStyle = 'rgba(245,250,217,0.08)';
       ctx.fillRect(0, centerY - 0.5, width, 1);
-      ctx.globalAlpha = 1;
 
       for (let i = 0; i < barCount; i++) {
         const value = dataArray[i * step] / 255;
@@ -60,13 +55,9 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
         const x = i * (BAR_WIDTH + BAR_GAP);
 
         // Left bars are dimmer (scrolling time illusion)
-        const opacity = 0.28 + 0.72 * (i / barCount);
-        const color = barColor(value);
-
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 6 + value * 10;
-        ctx.fillStyle = color;
-        ctx.globalAlpha = opacity;
+        const positionOpacity = 0.28 + 0.72 * (i / barCount);
+        ctx.fillStyle = '#eef5c5';
+        ctx.globalAlpha = barOpacity(value) * positionOpacity;
 
         // Upper half — rounded at top
         ctx.beginPath();
@@ -79,7 +70,6 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
         ctx.fill();
       }
 
-      ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
     };
 
@@ -91,10 +81,10 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
   }, [analyserNode]);
 
   return (
-    <div data-testid="live-waveform" className="px-4">
+    <div data-testid="live-waveform" className="rounded-2xl border border-cw-border bg-cw-surface mx-5 p-3">
       <canvas
         ref={canvasRef}
-        className="h-[100px] w-full rounded-lg bg-transparent"
+        className="h-[100px] w-full rounded-[10px]"
       />
     </div>
   );

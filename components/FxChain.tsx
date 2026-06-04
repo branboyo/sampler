@@ -39,7 +39,7 @@ function Slider({ label, value, min, max, step = 1, unit = '', onChange }: Slide
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-16 shrink-0 text-[10px] text-cw-text-secondary">{label}</span>
+      <span className="w-16 shrink-0 text-[10px] text-cw-text-muted">{label}</span>
       <input
         type="range"
         min={min}
@@ -52,7 +52,7 @@ function Slider({ label, value, min, max, step = 1, unit = '', onChange }: Slide
         onWheel={(e) => e.currentTarget.blur()}
         className="cw-slider flex-1"
       />
-      <span className="w-10 shrink-0 text-right font-mono text-[10px] text-cw-timestamp">
+      <span className="w-10 shrink-0 text-right text-[10px] text-cw-text-muted [font-variant-numeric:tabular-nums]">
         {local}{unit}
       </span>
     </div>
@@ -165,12 +165,12 @@ function buildKnobArc(value: number, min: number, max: number) {
 
   if (Math.abs(value - mid) < 0.5) {
     const zeroTick = { inner: polarToXY(KNOB_CENTER, 19), outer: polarToXY(KNOB_CENTER, 24) };
-    return { d: '', tick: zeroTick, color: '#252940' };
+    return { d: '', tick: zeroTick, color: '#1e2020' };
   }
   return {
     d: `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A 33 33 0 ${largeArc} ${sweep} ${end.x.toFixed(2)} ${end.y.toFixed(2)}`,
     tick: { inner: tickInner, outer: tickOuter },
-    color: value > mid ? '#6366f1' : '#c084fc',
+    color: '#eef5c5',
   };
 }
 
@@ -229,23 +229,23 @@ function PitchKnob({ value, min, max, label, unit, onCommit }: PitchKnobProps) {
         onDoubleClick={handleDblClick}
       >
         {/* Track ring — full circle; span=180° means the groove equals the full ring */}
-        <circle cx="42" cy="42" r="33" fill="none" stroke="#252940" strokeWidth="5" />
+        <circle cx="42" cy="42" r="33" fill="none" stroke="#1e2020" strokeWidth="5" />
         {/* Value arc */}
         {d && <path d={d} fill="none" stroke={color} strokeWidth="5" strokeLinecap="round" />}
         {/* Face */}
-        <circle cx="42" cy="42" r="26" fill="#111427" stroke="#252940" strokeWidth="1" />
+        <circle cx="42" cy="42" r="26" fill="#161818" stroke="#1e2020" strokeWidth="1" />
         {/* Indicator tick — short line near face edge, always at current angle */}
         <line
           x1={tick.inner.x.toFixed(2)} y1={tick.inner.y.toFixed(2)}
           x2={tick.outer.x.toFixed(2)} y2={tick.outer.y.toFixed(2)}
-          stroke="#67e8f9" strokeWidth="2.5" strokeLinecap="round"
+          stroke="#eef5c5" strokeWidth="2.5" strokeLinecap="round"
         />
       </svg>
-      <span className="font-mono text-[12px] font-bold leading-none text-cw-timestamp">
+      <span className="text-[12px] font-bold leading-none text-cw-primary [font-variant-numeric:tabular-nums]">
         {sign}{local}
-        <span className="ml-0.5 text-[9px] font-normal text-cw-text-secondary">{unit}</span>
+        <span className="ml-0.5 text-[9px] font-normal text-cw-text-muted">{unit}</span>
       </span>
-      <span className="text-[9px] text-cw-text-secondary">{label}</span>
+      <span className="text-[9px] text-cw-text-muted">{label}</span>
     </div>
   );
 }
@@ -285,17 +285,17 @@ function PitchPanel({ params, id, onUpdateParams }: {
 
       {/* Range pills */}
       <div className="flex flex-col items-center gap-1.5">
-        <span className="text-[9px] uppercase tracking-wider text-cw-text-secondary">Range</span>
+        <span className="text-[9px] uppercase tracking-wider text-cw-text-muted">Range</span>
         <div className="flex gap-1">
           {PITCH_RANGES.map((r) => (
             <button
               key={r}
               onClick={() => handleRangeChange(r)}
               className={[
-                'rounded-full border px-2 py-0.5 font-mono text-[10px] transition-all',
+                'rounded-full border px-2 py-0.5 text-[10px] [font-variant-numeric:tabular-nums] transition-all',
                 r === range
-                  ? 'border-cw-action-bold bg-cw-action-bold/15 text-cw-action'
-                  : 'border-cw-border text-cw-text-secondary hover:border-cw-action hover:text-cw-action',
+                  ? 'border-cw-primary bg-cw-primary/15 text-cw-primary'
+                  : 'border-cw-border text-cw-text-muted hover:border-cw-primary hover:text-cw-primary',
               ].join(' ')}
             >
               ±{r}
@@ -322,8 +322,8 @@ function PitchPanel({ params, id, onUpdateParams }: {
         className={[
           'w-full rounded-md border px-3 py-1.5 text-[10px] font-medium transition-colors',
           params.preserveFormants
-            ? 'border-cw-action-bold bg-cw-action-bold/15 text-cw-action'
-            : 'border-cw-border text-cw-text-secondary hover:border-cw-action hover:text-cw-action',
+            ? 'border-cw-primary bg-cw-primary/15 text-cw-primary'
+            : 'border-cw-border text-cw-text-muted hover:border-cw-primary hover:text-cw-primary',
         ].join(' ')}
       >
         Preserve Formants
@@ -379,10 +379,10 @@ function FxCard({
     <div
       onDragOver={(e) => { e.preventDefault(); onDragOver(index); }}
       className={[
-        'cw-card-enter group rounded-lg border select-none',
-        item.enabled ? 'border-cw-action-bold/40 bg-cw-surface' : 'border-cw-border bg-cw-surface/50',
+        'group rounded-[10px] border select-none',
+        item.enabled ? 'border-cw-primary/40 bg-cw-surface' : 'border-cw-border bg-cw-surface/50',
         isDragging ? 'opacity-40' : 'opacity-100',
-        isOver ? 'ring-1 ring-cw-action-bold/60' : '',
+        isOver ? 'ring-1 ring-cw-primary/60' : '',
       ].join(' ')}
     >
       {/* Header row */}
@@ -392,7 +392,7 @@ function FxCard({
           draggable
           onDragStart={() => onDragStart(index)}
           onDragEnd={onDragEnd}
-          className="cursor-grab text-cw-text-secondary active:cursor-grabbing"
+          className="cursor-grab text-cw-text-muted active:cursor-grabbing"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
             <circle cx="4" cy="3" r="1.2" />
@@ -410,8 +410,8 @@ function FxCard({
           className={[
             'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-colors',
             item.enabled
-              ? 'bg-cw-action-bold text-white'
-              : 'bg-cw-border text-cw-text-secondary',
+              ? 'bg-cw-success text-cw-bg'
+              : 'bg-cw-border text-cw-text-muted',
           ].join(' ')}
           title={item.enabled ? 'Bypass' : 'Enable'}
         >
@@ -422,7 +422,7 @@ function FxCard({
         <span
           className={[
             'flex-1 text-xs font-medium',
-            item.enabled ? 'text-cw-text-primary' : 'text-cw-text-secondary',
+            item.enabled ? 'text-cw-text' : 'text-cw-text-muted',
             hasParams ? 'cursor-pointer' : '',
           ].join(' ')}
           onClick={() => hasParams && setExpanded((v) => !v)}
@@ -434,7 +434,7 @@ function FxCard({
         {hasParams && (
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="cw-chevron text-cw-text-secondary"
+            className="cw-chevron text-cw-text-muted"
             style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -446,7 +446,7 @@ function FxCard({
         {/* Delete */}
         <button
           onClick={() => onRemove(item.id)}
-          className="opacity-0 transition-opacity hover:text-cw-error group-hover:opacity-100 text-cw-text-secondary"
+          className="opacity-0 transition-opacity hover:text-cw-attention group-hover:opacity-100 text-cw-text-muted"
           title="Remove"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -470,8 +470,8 @@ function FxCard({
 
 function AddFxPicker({ onAdd, onClose }: { onAdd: (type: FxType) => void; onClose: () => void }) {
   return (
-    <div className="rounded-lg border border-cw-border bg-cw-elevated p-2 shadow-xl">
-      <div className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-widest text-cw-text-secondary">
+    <div className="rounded-[10px] border border-cw-border bg-cw-surface p-2">
+      <div className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-widest text-cw-text-muted">
         Add Effect
       </div>
       <div className="flex flex-col gap-0.5">
@@ -479,7 +479,7 @@ function AddFxPicker({ onAdd, onClose }: { onAdd: (type: FxType) => void; onClos
           <button
             key={type}
             onClick={() => { onAdd(type); onClose(); }}
-            className="rounded-md px-2 py-1.5 text-left text-xs text-cw-text-primary transition-colors hover:bg-cw-surface"
+            className="rounded-md px-2 py-1.5 text-left text-xs text-cw-text transition-colors hover:bg-cw-bg"
           >
             {FX_LABELS[type]}
           </button>
@@ -521,19 +521,19 @@ export default function FxChain({
   }, [dragFrom, dragOver, onReorder]);
 
   return (
-    <div className="px-4 pt-1 pb-2">
+    <div className="rounded-2xl border border-cw-border bg-cw-surface mx-5 px-4 py-3">
       {/* Section header */}
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[10px] font-medium uppercase tracking-widest text-cw-text-secondary">
-          FX Chain
+        <span className="text-[12px] font-semibold uppercase tracking-[1px] text-cw-text-muted">
+          Effects
           {isProcessing && (
-            <span className="ml-1.5 text-cw-action-bold">processing…</span>
+            <span className="ml-1.5 text-cw-primary">processing…</span>
           )}
         </span>
         <div className="relative">
           <button
             onClick={() => setShowPicker((v) => !v)}
-            className="cw-pressable flex items-center gap-1 rounded-md border border-cw-border bg-cw-surface px-2 py-0.5 text-[10px] text-cw-text-secondary hover:bg-cw-elevated hover:text-cw-text-primary"
+            className="cw-pressable flex items-center gap-1 rounded-lg border border-cw-border bg-cw-bg px-2.5 py-1 text-[11px] text-cw-text-muted"
           >
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5">
               <line x1="4" y1="1" x2="4" y2="7" />
@@ -561,7 +561,7 @@ export default function FxChain({
 
       {/* Chain items */}
       {chain.length === 0 ? (
-        <p className="py-2 text-center text-[11px] text-cw-text-secondary">
+        <p className="py-2 text-center text-[11px] text-cw-text-muted">
           No effects — click Add FX to get started
         </p>
       ) : (

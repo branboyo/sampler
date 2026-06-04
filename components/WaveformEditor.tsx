@@ -82,14 +82,14 @@ function drawMiniWave(
     const barH = Math.max(2 * dpr, maxAmp * norm * H * 0.85);
     const x = i * (barW + gap);
     const y = (H - barH) / 2;
-    ctx.fillStyle = 'rgba(110,113,145,0.6)';
+    ctx.fillStyle = 'rgba(245,250,217,0.4)';
     ctx.beginPath();
     ctx.roundRect(x, y, barW, barH, dpr);
     ctx.fill();
   }
 
   // Centre marker — exact handle / cursor position
-  ctx.fillStyle = 'rgba(103,232,249,0.9)';
+  ctx.fillStyle = 'rgba(238,245,197,0.9)';
   ctx.fillRect(W / 2 - dpr, 0, dpr * 2, H);
 }
 
@@ -142,11 +142,11 @@ function EditableTrimTime({ value, min, max, style, anchor, onCommit }: Editable
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="w-[72px] rounded border border-cw-action-bold/60 bg-cw-elevated px-1 text-center font-mono text-[10px] text-cw-timestamp outline-none"
+          className="w-[72px] rounded border border-cw-primary/60 bg-cw-surface px-1 text-center text-[10px] text-cw-text-muted [font-variant-numeric:tabular-nums] outline-none"
         />
       ) : (
         <span
-          className="cursor-text font-mono text-[10px] text-cw-timestamp hover:text-cw-action"
+          className="cursor-text text-[10px] text-cw-text-muted [font-variant-numeric:tabular-nums] hover:text-cw-primary"
           title="Click to enter exact time (seconds)"
           onClick={startEdit}
         >
@@ -585,7 +585,7 @@ export default function WaveformEditor({
     const region = regions.addRegion({
       start,
       end: clampedEnd,
-      color: 'rgba(103, 232, 249, 0.08)',
+      color: 'rgba(238, 245, 197, 0.08)',
       drag: false,
       resize: true,
     });
@@ -606,8 +606,8 @@ export default function WaveformEditor({
 
       // Thin track line
       h.style.width = '2px';
-      h.style.background = 'rgba(103, 232, 249, 0.65)';
-      h.style.boxShadow = '0 0 6px rgba(103, 232, 249, 0.45)';
+      h.style.background = 'rgba(238, 245, 197, 0.65)';
+      h.style.boxShadow = 'none';
       h.style.cursor = 'default';
       if (side === 'left') h.style.borderLeft = 'none';
       else h.style.borderRight = 'none';
@@ -622,8 +622,8 @@ export default function WaveformEditor({
         width: '13px',
         height: '26px',
         borderRadius: '6px',
-        background: 'rgba(103, 232, 249, 0.92)',
-        boxShadow: '0 0 10px rgba(103,232,249,0.5)',
+        background: 'rgba(238, 245, 197, 0.92)',
+        boxShadow: 'none',
         transition: 'background 0.15s, box-shadow 0.15s',
         cursor: 'default',   // suppresses inherited ew-resize
         display: 'flex',
@@ -639,7 +639,7 @@ export default function WaveformEditor({
         Object.assign(dash.style, {
           width: '5px',
           height: '1.5px',
-          background: 'rgba(15, 17, 30, 0.5)',
+          background: 'rgba(15, 16, 16, 0.5)',
           borderRadius: '1px',
           pointerEvents: 'none',
           flexShrink: '0',
@@ -649,13 +649,12 @@ export default function WaveformEditor({
 
       // Hover glow
       pill.addEventListener('pointerenter', () => {
-        pill.style.background = 'rgba(103, 232, 249, 1)';
-        pill.style.boxShadow =
-          '0 0 16px rgba(103,232,249,0.75), 0 0 4px rgba(103,232,249,1)';
+        pill.style.background = 'rgba(238, 245, 197, 1)';
+        pill.style.boxShadow = 'none';
       });
       pill.addEventListener('pointerleave', () => {
-        pill.style.background = 'rgba(103, 232, 249, 0.92)';
-        pill.style.boxShadow = '0 0 10px rgba(103,232,249,0.5)';
+        pill.style.background = 'rgba(238, 245, 197, 0.92)';
+        pill.style.boxShadow = 'none';
       });
 
       h.appendChild(pill);
@@ -692,9 +691,9 @@ export default function WaveformEditor({
 
       const ws = WaveSurfer.create({
         container: containerRef.current,
-        waveColor: 'rgba(110, 113, 145, 0.3)',
-        progressColor: '#6366f1',
-        cursorColor: '#ffffff',
+        waveColor: 'rgba(238, 245, 197, 0.3)',
+        progressColor: '#eef5c5',
+        cursorColor: '#ffb3c3',
         cursorWidth: 2,
         barWidth: 3,
         barGap: 1,
@@ -862,30 +861,30 @@ export default function WaveformEditor({
       : null;
 
   return (
-    <div data-testid="waveform-editor" className="px-4 pt-2 pb-1">
+    <div data-testid="waveform-editor" className="mx-5 rounded-2xl border border-cw-border bg-cw-surface px-3 pt-3 pb-2">
       {/* Waveform + bubble anchor */}
       <div className="relative">
         {/* Option A: Floating bubble */}
         {zoomMode === 'bubble' && zoomState && (
           <div
-            className="pointer-events-none absolute z-30 w-52 -translate-x-1/2 rounded-xl border border-cw-action-bold bg-cw-elevated p-2 shadow-xl shadow-black/40"
+            className="pointer-events-none absolute z-30 w-52 -translate-x-1/2 rounded-xl border border-cw-primary bg-cw-surface p-2"
             style={{ bottom: 'calc(100% + 14px)', left: `${zoomState.anchorPct * 100}%` }}
           >
             {/* Caret */}
-            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[7px] border-transparent border-t-cw-action-bold" />
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[7px] border-transparent border-t-cw-primary" />
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[9px] uppercase tracking-wider text-cw-action">Magnified</span>
+              <span className="text-[9px] uppercase tracking-wider text-cw-primary">Magnified</span>
               {zoomLabel && (
-                <span className="font-mono text-[9px] text-cw-text-secondary">{zoomLabel}</span>
+                <span className="text-[9px] text-cw-text-muted">{zoomLabel}</span>
               )}
-              <span className="font-mono text-[9px] text-cw-text-secondary">8×</span>
+              <span className="text-[9px] text-cw-text-muted">8×</span>
             </div>
             <canvas
               ref={zoomCanvasCallbackRef}
               height={50}
-              className="block w-full rounded bg-[#0d0f1e]"
+              className="block w-full rounded bg-cw-bg"
             />
-            <div className="mt-1 text-center font-mono text-[9px] text-cw-timestamp">
+            <div className="mt-1 text-center text-[9px] text-cw-text-muted [font-variant-numeric:tabular-nums]">
               {formatTime(zoomState.centerSec)}
             </div>
           </div>
@@ -893,7 +892,7 @@ export default function WaveformEditor({
 
         <div
           ref={containerRef}
-          className="overflow-hidden rounded-lg bg-cw-surface transition-opacity duration-200"
+          className="overflow-hidden rounded-[10px] bg-cw-bg transition-opacity duration-200"
           style={{ minHeight: '80px', opacity: isUpdating ? 0.45 : 1 }}
         />
       </div>
@@ -915,7 +914,7 @@ export default function WaveformEditor({
               }}
             />
             <span
-              className="absolute -translate-x-1/2 font-mono text-[10px] text-cw-timestamp select-none"
+              className="absolute -translate-x-1/2 text-[10px] text-cw-text-muted select-none"
               style={{ left: `${midLabelPx}px` }}
             >
               –
@@ -971,7 +970,7 @@ export default function WaveformEditor({
             <button
               onClick={handleApplyTrim}
               title="Replace audio with the trimmed region"
-              className="flex items-center gap-1 rounded px-2.5 py-0.5 text-[10px] text-cw-action ring-1 ring-cw-action/30 transition-colors hover:bg-cw-action/10 hover:ring-cw-action/60 active:bg-cw-action/20"
+              className="flex items-center gap-1 rounded px-2.5 py-0.5 text-[10px] text-cw-primary ring-1 ring-cw-primary/30 transition-colors hover:bg-cw-primary/10 hover:ring-cw-primary/60 active:bg-cw-primary/20"
             >
               <span aria-hidden>✂</span>
               Apply trim
@@ -982,13 +981,13 @@ export default function WaveformEditor({
 
       {/* Option B: Inline zoom panel */}
       {zoomMode === 'inline' && zoomState && (
-        <div className="mt-2 overflow-hidden rounded-lg border border-cw-action-bold bg-[#0d0f1e]">
-          <div className="flex items-center justify-between border-b border-cw-action-bold/20 bg-cw-action-bold/[0.07] px-2 py-1">
-            <span className="text-[9px] uppercase tracking-wider text-cw-action">Magnified · 8×</span>
+        <div className="mt-2 overflow-hidden rounded-lg border border-cw-primary bg-cw-bg">
+          <div className="flex items-center justify-between border-b border-cw-primary/20 bg-cw-primary/[0.07] px-2 py-1">
+            <span className="text-[9px] uppercase tracking-wider text-cw-primary">Magnified · 8×</span>
             {zoomLabel && (
-              <span className="text-[9px] text-cw-text-secondary">{zoomLabel}</span>
+              <span className="text-[9px] text-cw-text-muted">{zoomLabel}</span>
             )}
-            <span className="font-mono text-[9px] text-cw-timestamp">
+            <span className="text-[9px] text-cw-text-muted [font-variant-numeric:tabular-nums]">
               {formatTime(zoomState.centerSec)}
             </span>
           </div>

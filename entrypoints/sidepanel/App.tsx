@@ -21,48 +21,6 @@ import SaveControls from '@/components/SaveControls';
 import RecordingLibrary from '@/components/RecordingLibrary';
 import PitchDisplay from '@/components/PitchDisplay';
 
-const SamplerIcon = ({ isRecording }: { isRecording: boolean }) => (
-  /* overflow="hidden" clips the SVG filter glow to the 16×16 viewport */
-  <svg
-    width="16" height="16" viewBox="0 0 16 16"
-    xmlns="http://www.w3.org/2000/svg"
-    style={{ display: 'block', overflow: 'hidden', flexShrink: 0 }}
-  >
-    <defs>
-      {/* Normal: indigo→purple gradient */}
-      <linearGradient id="si-grad-idle" x1="0" y1="0" x2="16" y2="0" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stopColor="#818cf8" stopOpacity="0.6"/>
-        <stop offset="40%"  stopColor="#a855f7"/>
-        <stop offset="60%"  stopColor="#c084fc"/>
-        <stop offset="100%" stopColor="#6366f1" stopOpacity="0.6"/>
-      </linearGradient>
-      {/* Recording: pink→fuchsia gradient */}
-      <linearGradient id="si-grad-rec" x1="0" y1="0" x2="16" y2="0" gradientUnits="userSpaceOnUse">
-        <stop offset="0%"   stopColor="#f472b6" stopOpacity="0.6"/>
-        <stop offset="40%"  stopColor="#e879f9"/>
-        <stop offset="60%"  stopColor="#f0abfc"/>
-        <stop offset="100%" stopColor="#f472b6" stopOpacity="0.6"/>
-      </linearGradient>
-      {/* Tight glow — stdDeviation 0.6 spreads ~2px, well within SVG clip */}
-      <filter id="si-glow" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="0.6" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-    </defs>
-    {/* 5 bars, width=2 gap=1.2, centered in 16×16 */}
-    <g
-      filter="url(#si-glow)"
-      className={isRecording ? 'cw-bars-recording' : ''}
-    >
-      <rect x="0.6"  y="6"   width="2" height="4"  rx="1" fill={`url(#si-grad-${isRecording ? 'rec' : 'idle'})`} opacity="0.65"/>
-      <rect x="3.8"  y="4.5" width="2" height="7"  rx="1" fill={`url(#si-grad-${isRecording ? 'rec' : 'idle'})`} opacity="0.82"/>
-      <rect x="7"    y="2"   width="2" height="12" rx="1" fill={`url(#si-grad-${isRecording ? 'rec' : 'idle'})`}/>
-      <rect x="10.2" y="4.5" width="2" height="7"  rx="1" fill={`url(#si-grad-${isRecording ? 'rec' : 'idle'})`} opacity="0.82"/>
-      <rect x="13.4" y="6"   width="2" height="4"  rx="1" fill={`url(#si-grad-${isRecording ? 'rec' : 'idle'})`} opacity="0.65"/>
-    </g>
-  </svg>
-);
-
 const GearIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3" />
@@ -77,8 +35,6 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastEncodedSize, setLastEncodedSize] = useState<number | null>(null);
-  // Changes only when the source recording changes — keeps WaveformEditor from
-  // fully reinitialising on every FX param update.
   const [waveformKey, setWaveformKey] = useState('');
 
   const recorder = useRecorder();
@@ -89,27 +45,23 @@ export default function App() {
   const pitchBuffer = fx.processedBuffer ?? editor.state.audioBuffer;
   const pitch = usePitchDetection(pitchBuffer);
 
-  // Sync format preference from settings
   useEffect(() => {
     if (!settings.loading) {
       setFormat(settings.settings.preferredFormat);
     }
   }, [settings.loading, settings.settings.preferredFormat]);
 
-  // Auto-stop when max duration is reached
   useEffect(() => {
     if (recorder.state.status === 'stopping' && appState === 'recording') {
       handleStop();
     }
   }, [recorder.state.status]);
 
-  // Transition to editing when blob is ready after stop
   useEffect(() => {
     if (recorder.audioBlob && appState === 'recording') {
       const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
       setFileName(`recording-${timestamp}`);
       setLastEncodedSize(recorder.audioBlob.size);
-      // Set a new source key BEFORE loading so WaveformEditor knows this is a new source
       setWaveformKey(crypto.randomUUID());
       editor.loadFromBlob(recorder.audioBlob, settings.settings.sampleRate).then((buffer) => {
         if (buffer) {
@@ -147,7 +99,6 @@ export default function App() {
     setSaving(true);
     setSaveMessage(null);
     try {
-      // Apply trim to the FX-processed buffer at save time
       const { trimStart, trimEnd } = editor.state;
       const trimmedBuffer = (trimEnd - trimStart > 0.001)
         ? trimAudio(bufferToSave, trimStart, trimEnd)
@@ -199,25 +150,30 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-cw-bg font-ui text-cw-text-primary">
+    <div className="flex min-h-screen flex-col bg-cw-bg font-ui text-cw-text">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-cw-border px-4 py-3">
+      <div className="flex items-center justify-between border-b border-cw-border px-5 py-3">
         <div className="flex items-center gap-2">
-          <SamplerIcon isRecording={appState === 'recording'} />
-          <span className="text-sm font-semibold text-cw-text-primary">Sampler</span>
+          <span className="text-[15px] font-semibold tracking-tight">Sampler</span>
+          {appState === 'recording' && (
+            <div className="flex items-center gap-1.5">
+              <div className="pulse-recording h-2 w-2 rounded-full bg-cw-attention" />
+              <span className="text-[11px] font-medium tracking-wide text-cw-attention">REC</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {appState === 'editing' && (
             <button
               onClick={handleNewRecording}
-              className="rounded px-2 py-1 text-xs text-cw-text-secondary transition-colors hover:bg-cw-elevated hover:text-cw-text-primary"
+              className="cw-pressable rounded-lg border border-cw-border bg-cw-surface px-2.5 py-1 text-xs text-cw-text-muted"
             >
               New
             </button>
           )}
           <button
             onClick={() => browser.runtime.openOptionsPage()}
-            className="text-cw-text-secondary transition-colors hover:text-cw-text-primary"
+            className="cw-pressable rounded-lg border border-cw-border bg-cw-surface p-1.5 text-cw-text-muted"
           >
             <GearIcon />
           </button>
@@ -226,7 +182,7 @@ export default function App() {
 
       {/* Error Banner */}
       {recorder.error && (
-        <div className="cw-banner-enter mx-4 mt-2 rounded-lg bg-cw-error/10 px-3 py-2 text-xs text-cw-error">
+        <div className="mx-5 mt-3 rounded-[10px] border border-cw-attention/20 bg-cw-attention/10 px-3 py-2 text-xs text-cw-attention">
           Recording failed: {recorder.error}
         </div>
       )}
@@ -234,10 +190,10 @@ export default function App() {
       {/* Save Message */}
       {saveMessage && (
         <div
-          className={`cw-banner-enter mx-4 mt-2 rounded-lg px-3 py-2 text-xs ${
+          className={`mx-5 mt-3 rounded-[10px] border px-3 py-2 text-xs ${
             saveMessage.startsWith('Save failed')
-              ? 'bg-cw-error/10 text-cw-error'
-              : 'bg-cw-success/10 text-cw-success'
+              ? 'border-cw-attention/20 bg-cw-attention/10 text-cw-attention'
+              : 'border-cw-success/20 bg-cw-success/10 text-cw-success'
           }`}
         >
           {saveMessage}
@@ -246,9 +202,11 @@ export default function App() {
 
       {/* Idle State */}
       {appState === 'idle' && (
-        <div className="cw-section-enter flex flex-col items-center gap-4 py-14">
-          <RecordButton isRecording={false} onToggle={handleRecordToggle} />
-          <p className="text-xs text-cw-text-secondary">Click to record tab audio</p>
+        <div className="flex flex-col gap-3 pt-6">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-cw-border bg-cw-surface mx-5 py-10">
+            <RecordButton isRecording={false} onToggle={handleRecordToggle} />
+            <p className="text-xs text-cw-text-muted">tap to record this tab</p>
+          </div>
           <RecordingLibrary
             recordings={library.recordings}
             onSelect={handleSelectRecording}
@@ -259,15 +217,15 @@ export default function App() {
 
       {/* Recording State */}
       {appState === 'recording' && (
-        <div className="cw-section-enter relative flex flex-1 flex-col">
-          {/* Ambient purple bloom — fills full remaining viewport height */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_55%,rgba(168,85,247,0.09)_0%,transparent_100%)]" />
+        <div className="flex flex-1 flex-col gap-3 pt-3">
           <RecordingTimer
             elapsed={recorder.state.elapsed}
             maxDuration={recorder.state.maxDuration}
+            isRecording
           />
           <LiveWaveform analyserNode={recorder.analyserNode} />
-          <div className="flex justify-center py-6">
+          <PitchDisplay pitch={pitch.currentPitch} />
+          <div className="flex justify-center py-4">
             <RecordButton isRecording={true} onToggle={handleRecordToggle} />
           </div>
         </div>
@@ -275,7 +233,7 @@ export default function App() {
 
       {/* Editing State */}
       {appState === 'editing' && (
-        <div className="cw-section-enter flex flex-col gap-3 pb-4">
+        <div className="flex flex-col gap-3 pb-4 pt-3">
           <FileNameEditor
             name={fileName}
             onChange={setFileName}

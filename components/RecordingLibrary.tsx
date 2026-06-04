@@ -25,33 +25,32 @@ export default function RecordingLibrary({
 }: RecordingLibraryProps) {
   if (recordings.length === 0) {
     return (
-      <div data-testid="recording-library" className="px-4 py-3 text-center text-xs text-cw-text-secondary">
+      <div data-testid="recording-library" className="mx-5 text-center text-xs text-cw-text-muted">
         No recordings yet
       </div>
     );
   }
 
   return (
-    <div data-testid="recording-library" className="border-t border-cw-border px-4 py-3">
-      <div className="mb-3 text-xs font-medium uppercase tracking-wider text-cw-text-secondary">
+    <div data-testid="recording-library" className="rounded-2xl border border-cw-border bg-cw-surface mx-5 px-4 py-3">
+      <div className="mb-3 text-[12px] font-semibold uppercase tracking-[1px] text-cw-text-muted">
         Library
       </div>
       <div className="flex flex-col gap-2">
-        {recordings.map((rec, index) => (
+        {recordings.map((rec) => (
           <div
             key={rec.id}
-            style={{ '--i': index } as React.CSSProperties}
-            className="cw-list-stagger group flex cursor-pointer items-center justify-between rounded-lg bg-cw-surface px-3 py-2.5 transition-colors hover:bg-cw-elevated"
+            className="group flex cursor-pointer items-center justify-between bg-cw-bg rounded-[10px] border border-cw-border px-3 py-2.5"
           >
             <button onClick={() => onSelect(rec.id)} className="text-left">
-              <div className="text-xs font-medium text-cw-text-primary">{rec.name}</div>
-              <div className="mt-0.5 text-[10px] text-cw-text-secondary">
+              <div className="text-xs font-medium text-cw-text">{rec.name}</div>
+              <div className="mt-0.5 text-[10px] text-cw-text-muted">
                 {formatDuration(rec.duration)} · {formatSize(rec.size)}
               </div>
             </button>
             <button
               onClick={() => onDelete(rec.id)}
-              className="text-xs text-cw-text-secondary opacity-0 transition-opacity hover:text-cw-error group-hover:opacity-100"
+              className="text-xs text-cw-text-muted opacity-0 transition-opacity hover:text-cw-attention group-hover:opacity-100"
             >
               ✕
             </button>

@@ -14,11 +14,11 @@ export default function SaveControls({
   disabled,
 }: SaveControlsProps) {
   return (
-    <div data-testid="save-controls" className="flex gap-2 px-4 py-3">
+    <div data-testid="save-controls" className="flex gap-2 px-5 py-3">
       <select
         value={format}
         onChange={(e) => onFormatChange(e.target.value as AudioFormat)}
-        className="w-[72px] shrink-0 cursor-pointer appearance-none rounded-lg border border-cw-border bg-cw-surface px-2.5 py-2 text-xs text-cw-text-primary"
+        className="w-[72px] shrink-0 cursor-pointer appearance-none rounded-[10px] border border-cw-border bg-cw-surface px-2.5 py-2 text-xs text-cw-text-muted"
       >
         <option value="wav">WAV</option>
         <option value="mp3">MP3</option>
@@ -26,14 +26,14 @@ export default function SaveControls({
       <button
         onClick={onSave}
         disabled={disabled}
-        className="cw-pressable flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-cw-action-bold py-2 text-xs font-semibold text-white shadow-md shadow-cw-action-bold/20 hover:bg-cw-action hover:shadow-[0_0_20px_rgba(99,102,241,0.45)] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+        className="cw-pressable flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] bg-cw-primary py-2 text-xs font-semibold text-cw-bg disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
       >
         <svg
           width="14"
           height="14"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="currentColor"
+          stroke="#0f1010"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"

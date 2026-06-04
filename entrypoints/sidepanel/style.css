@@ -1,32 +1,35 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cw-bg: #0a0c14;
-  --color-cw-surface: #111427;
-  --color-cw-elevated: #1a1d33;
-  --color-cw-border: #252940;
-  --color-cw-text-primary: #e0e2ef;
-  --color-cw-text-secondary: #6e7191;
-  --color-cw-recording: #c084fc;
-  --color-cw-recording-bold: #a855f7;
-  --color-cw-action: #818cf8;
-  --color-cw-action-bold: #6366f1;
-  --color-cw-timestamp: #67e8f9;
-  --color-cw-success: #6ee7b7;
-  --color-cw-success-bold: #34d399;
-  --color-cw-error: #f472b6;
+  --color-cw-bg: #0f1010;
+  --color-cw-surface: #161818;
+  --color-cw-border: #1e2020;
+  --color-cw-text: #f5fad9;
+  --color-cw-text-muted: rgba(245, 250, 217, 0.35);
+  --color-cw-primary: #eef5c5;
+  --color-cw-attention: #ffb3c3;
+  --color-cw-success: #b7feae;
+  --color-cw-warning: #ffeb80;
 
-  --font-ui: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-ui: 'Archivo', sans-serif;
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.6); }
-  50% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(192, 132, 252, 0); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .pulse-recording {
   animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 60px rgba(238, 245, 197, 0.04); }
+  50% { box-shadow: 0 0 60px rgba(238, 245, 197, 0.1); }
+}
+
+.pulse-idle-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
 /* Custom range slider */
@@ -46,13 +49,13 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--color-cw-action-bold);
+  background: var(--color-cw-primary);
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition: filter 0.15s, transform 0.1s;
 }
 
 .cw-slider::-webkit-slider-thumb:hover {
-  background: var(--color-cw-action);
+  filter: brightness(1.1);
   transform: scale(1.2);
 }
 
@@ -61,7 +64,7 @@
   height: 12px;
   border: none;
   border-radius: 50%;
-  background: var(--color-cw-action-bold);
+  background: var(--color-cw-primary);
   cursor: pointer;
 }
 
@@ -74,7 +77,7 @@
 /* WaveSurfer region trim handles */
 [part~="region-handle"] {
   width: 3px !important;
-  background: var(--color-cw-timestamp) !important;
+  background: var(--color-cw-primary) !important;
   opacity: 1 !important;
   cursor: ew-resize !important;
   overflow: visible !important;
@@ -88,8 +91,23 @@
   transform: translate(-50%, -50%);
   width: 10px;
   height: 28px;
-  background: var(--color-cw-timestamp);
+  background: var(--color-cw-primary);
   border-radius: 3px;
   opacity: 0.85;
-  box-shadow: 0 0 6px rgba(103, 232, 249, 0.5);
+}
+
+/* Pressable button interaction */
+.cw-pressable {
+  transition: filter 0.1s, transform 0.1s;
+}
+.cw-pressable:hover {
+  filter: brightness(1.1);
+}
+.cw-pressable:active {
+  transform: scale(0.96);
+}
+
+/* Chevron transition */
+.cw-chevron {
+  transition: transform 0.15s ease;
 }
