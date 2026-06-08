@@ -72,32 +72,6 @@ export default function App() {
         </select>
       </label>
 
-      {/* Waveform zoom mode */}
-      <div className="mb-6">
-        <span className="mb-2 block text-[10px] font-medium uppercase tracking-widest text-cw-text-secondary">
-          Waveform zoom style
-        </span>
-        <p className="mb-3 text-[11px] leading-relaxed text-cw-text-secondary">
-          When holding on the waveform or a trim handle, show a magnified view as a floating bubble (default) or an inline panel below the waveform.
-        </p>
-        <div className="flex gap-2">
-          {(['bubble', 'inline'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setForm((f) => ({ ...f, waveformZoomMode: mode }))}
-              className={[
-                'flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
-                form.waveformZoomMode === mode
-                  ? 'border-cw-action-bold bg-cw-action-bold/10 text-cw-action'
-                  : 'border-cw-border bg-cw-surface text-cw-text-secondary hover:border-cw-action/50 hover:text-cw-text-primary',
-              ].join(' ')}
-            >
-              {mode === 'bubble' ? '◉ Floating Bubble' : '▤ Inline Panel'}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <button
         onClick={handleSave}
         className="w-full cursor-pointer rounded-lg bg-cw-action-bold py-2.5 text-sm font-semibold text-white shadow-md shadow-cw-action-bold/20 transition-colors hover:bg-cw-action"

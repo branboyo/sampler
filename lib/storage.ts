@@ -4,7 +4,6 @@ export const DEFAULT_SETTINGS: Settings = {
   folderName: 'Sampler',
   preferredFormat: 'wav',
   sampleRate: 44100,
-  waveformZoomMode: 'bubble',
 };
 
 const DB_NAME = 'sampler-db';

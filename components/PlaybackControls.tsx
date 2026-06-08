@@ -8,7 +8,7 @@ export default function PlaybackControls({ isPlaying, onToggle }: PlaybackContro
     <div data-testid="playback-controls" className="flex justify-center py-2">
       <button
         onClick={onToggle}
-        className="cw-pressable relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-cw-primary"
+        className="cw-pressable relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-cw-attention"
       >
         {isPlaying ? (
           <div key="pause" className="cw-icon flex gap-1">

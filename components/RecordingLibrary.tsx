@@ -32,7 +32,7 @@ export default function RecordingLibrary({
   }
 
   return (
-    <div data-testid="recording-library" className="rounded-2xl border border-cw-border bg-cw-surface mx-5 px-4 py-3">
+    <div data-testid="recording-library" className="rounded-2xl border border-cw-border bg-cw-surface mx-5 px-4 py-3 shadow-lg shadow-black/25">
       <div className="mb-3 text-[12px] font-semibold uppercase tracking-[1px] text-cw-text-muted">
         Library
       </div>

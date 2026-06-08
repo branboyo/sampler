@@ -6,7 +6,6 @@ import { downloadAudio } from '@/lib/downloader';
 import { saveAudioBlob, saveRecordingMeta } from '@/lib/storage';
 import { useRecorder } from '@/hooks/useRecorder';
 import { useAudioEditor } from '@/hooks/useAudioEditor';
-import { useLibrary } from '@/hooks/useLibrary';
 import { useSettings } from '@/hooks/useSettings';
 import { useFxChain } from '@/hooks/useFxChain';
 import { usePitchDetection } from '@/hooks/usePitchDetection';
@@ -18,7 +17,6 @@ import FxChain from '@/components/FxChain';
 import PlaybackControls from '@/components/PlaybackControls';
 import FileNameEditor from '@/components/FileNameEditor';
 import SaveControls from '@/components/SaveControls';
-import RecordingLibrary from '@/components/RecordingLibrary';
 import PitchDisplay from '@/components/PitchDisplay';
 
 const GearIcon = () => (
@@ -36,15 +34,14 @@ export default function App() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastEncodedSize, setLastEncodedSize] = useState<number | null>(null);
   const [waveformKey, setWaveformKey] = useState('');
+  const [zoomActive, setZoomActive] = useState(false);
 
   const recorder = useRecorder();
   const editor = useAudioEditor();
-  const library = useLibrary();
   const settings = useSettings();
   const fx = useFxChain(editor.state.audioBuffer);
-  const pitchBuffer = fx.processedBuffer ?? editor.state.audioBuffer;
-  const pitch = usePitchDetection(pitchBuffer);
-
+  const effectiveBuffer = fx.processedBuffer ?? editor.state.audioBuffer;
+  const pitch = usePitchDetection(effectiveBuffer);
   useEffect(() => {
     if (!settings.loading) {
       setFormat(settings.settings.preferredFormat);
@@ -56,6 +53,12 @@ export default function App() {
       handleStop();
     }
   }, [recorder.state.status]);
+
+  useEffect(() => {
+    if (fx.isProcessing) {
+      pitch.invalidate();
+    }
+  }, [fx.isProcessing]);
 
   useEffect(() => {
     if (recorder.audioBlob && appState === 'recording') {
@@ -94,7 +97,7 @@ export default function App() {
   };
 
   const handleSave = useCallback(async () => {
-    const bufferToSave = fx.processedBuffer ?? editor.state.audioBuffer;
+    const bufferToSave = effectiveBuffer;
     if (!bufferToSave) return;
     setSaving(true);
     setSaveMessage(null);
@@ -120,7 +123,6 @@ export default function App() {
         channels: trimmedBuffer.numberOfChannels,
         size: encoded.size,
       });
-      await library.refresh();
       setLastEncodedSize(encoded.size);
 
       setSaveMessage('Saved!');
@@ -131,7 +133,7 @@ export default function App() {
     } finally {
       setSaving(false);
     }
-  }, [editor.state.audioBuffer, editor.state.trimStart, editor.state.trimEnd, fx.processedBuffer, format, fileName, settings.settings.folderName, library.refresh]);
+  }, [editor.state.audioBuffer, editor.state.trimStart, editor.state.trimEnd, fx.processedBuffer, format, fileName, settings.settings.folderName]);
 
   const handleNewRecording = () => {
     editor.reset();
@@ -141,16 +143,8 @@ export default function App() {
     setAppState('idle');
   };
 
-  const handleSelectRecording = async (id: string) => {
-    setSaveMessage(null);
-    fx.resetChain();
-    setWaveformKey(id);
-    await editor.loadRecording(id);
-    setAppState('editing');
-  };
-
   return (
-    <div className="flex min-h-screen flex-col bg-cw-bg font-ui text-cw-text">
+    <div className="flex h-screen flex-col overflow-hidden bg-cw-bg font-ui text-cw-text">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-cw-border px-5 py-3">
         <div className="flex items-center gap-2">
@@ -203,15 +197,10 @@ export default function App() {
       {/* Idle State */}
       {appState === 'idle' && (
         <div className="flex flex-col gap-3 pt-6">
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-cw-border bg-cw-surface mx-5 py-10">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-cw-border bg-cw-surface mx-5 py-10 shadow-lg shadow-black/25">
             <RecordButton isRecording={false} onToggle={handleRecordToggle} />
             <p className="text-xs text-cw-text-muted">tap to record this tab</p>
           </div>
-          <RecordingLibrary
-            recordings={library.recordings}
-            onSelect={handleSelectRecording}
-            onDelete={library.deleteRecording}
-          />
         </div>
       )}
 
@@ -224,7 +213,6 @@ export default function App() {
             isRecording
           />
           <LiveWaveform analyserNode={recorder.analyserNode} />
-          <PitchDisplay pitch={pitch.currentPitch} />
           <div className="flex justify-center py-4">
             <RecordButton isRecording={true} onToggle={handleRecordToggle} />
           </div>
@@ -233,20 +221,20 @@ export default function App() {
 
       {/* Editing State */}
       {appState === 'editing' && (
-        <div className="flex flex-col gap-3 pb-4 pt-3">
+        <div className="flex flex-1 min-h-0 flex-col gap-3 py-3">
           <FileNameEditor
             name={fileName}
             onChange={setFileName}
-            duration={editor.state.audioBuffer?.duration}
+            duration={effectiveBuffer?.duration}
             size={lastEncodedSize ?? undefined}
           />
+          <PitchDisplay pitch={pitch.currentPitch} />
           <WaveformEditor
-            audioBuffer={fx.processedBuffer ?? editor.state.audioBuffer}
+            audioBuffer={effectiveBuffer}
             sourceKey={waveformKey}
             trimStart={editor.state.trimStart}
             trimEnd={editor.state.trimEnd}
             isPlaying={editor.state.isPlaying}
-            zoomMode={settings.settings.waveformZoomMode}
             onTrimChange={(start, end) => {
               editor.setTrimStart(start);
               editor.setTrimEnd(end);
@@ -254,16 +242,19 @@ export default function App() {
             onPlayingChange={editor.setPlaying}
             onTimeUpdate={pitch.updateTime}
             onApplyTrim={(newBuffer) => {
+              pitch.invalidate();
               editor.replaceBuffer(newBuffer);
               fx.resetChain();
               setWaveformKey(crypto.randomUUID());
             }}
+            onZoomChange={setZoomActive}
           />
-          <PitchDisplay pitch={pitch.currentPitch} />
-          <PlaybackControls
-            isPlaying={editor.state.isPlaying}
-            onToggle={() => (editor.state.isPlaying ? editor.pause() : editor.play())}
-          />
+          {!zoomActive && (
+            <PlaybackControls
+              isPlaying={editor.state.isPlaying}
+              onToggle={() => (editor.state.isPlaying ? editor.pause() : editor.play())}
+            />
+          )}
           <FxChain
             chain={fx.chain}
             isProcessing={fx.isProcessing}
@@ -273,17 +264,14 @@ export default function App() {
             onUpdateParams={fx.updateFxParams}
             onReorder={fx.reorderFx}
           />
-          <SaveControls
-            format={format}
-            onFormatChange={setFormat}
-            onSave={handleSave}
-            disabled={!editor.state.audioBuffer || saving || fx.isProcessing}
-          />
-          <RecordingLibrary
-            recordings={library.recordings}
-            onSelect={handleSelectRecording}
-            onDelete={library.deleteRecording}
-          />
+          <div className="shrink-0">
+            <SaveControls
+              format={format}
+              onFormatChange={setFormat}
+              onSave={handleSave}
+              disabled={!editor.state.audioBuffer || saving || fx.isProcessing}
+            />
+          </div>
         </div>
       )}
     </div>

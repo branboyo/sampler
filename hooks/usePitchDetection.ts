@@ -32,5 +32,11 @@ export function usePitchDetection(audioBuffer: AudioBuffer | null) {
     setCurrentPitch(null);
   }, []);
 
-  return { frames, currentPitch, updateTime, clear };
+  const invalidate = useCallback(() => {
+    setFrames([]);
+    framesRef.current = [];
+    setCurrentPitch(null);
+  }, []);
+
+  return { frames, currentPitch, updateTime, clear, invalidate };
 }

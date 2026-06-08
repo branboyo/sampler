@@ -521,9 +521,9 @@ export default function FxChain({
   }, [dragFrom, dragOver, onReorder]);
 
   return (
-    <div className="rounded-2xl border border-cw-border bg-cw-surface mx-5 px-4 py-3">
+    <div className="flex min-h-0 flex-col rounded-2xl border border-cw-border bg-cw-surface mx-5 px-4 py-3 shadow-lg shadow-black/25">
       {/* Section header */}
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex shrink-0 items-center justify-between">
         <span className="text-[12px] font-semibold uppercase tracking-[1px] text-cw-text-muted">
           Effects
           {isProcessing && (
@@ -565,7 +565,7 @@ export default function FxChain({
           No effects — click Add FX to get started
         </p>
       ) : (
-        <div className="flex flex-col gap-1.5">
+        <div className="cw-scrollbar flex min-h-0 flex-col gap-1.5 overflow-y-auto">
           {chain.map((item, index) => (
             <FxCard
               key={item.id}

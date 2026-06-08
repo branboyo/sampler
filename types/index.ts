@@ -12,7 +12,6 @@ export interface Settings {
   folderName: string;
   preferredFormat: AudioFormat;
   sampleRate: number;
-  waveformZoomMode: 'bubble' | 'inline';
 }
 
 export type AudioFormat = 'wav' | 'mp3';

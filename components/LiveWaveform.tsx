@@ -81,7 +81,7 @@ export default function LiveWaveform({ analyserNode }: LiveWaveformProps) {
   }, [analyserNode]);
 
   return (
-    <div data-testid="live-waveform" className="rounded-2xl border border-cw-border bg-cw-surface mx-5 p-3">
+    <div data-testid="live-waveform" className="rounded-2xl border border-cw-border bg-cw-surface mx-5 p-3 shadow-lg shadow-black/25">
       <canvas
         ref={canvasRef}
         className="h-[100px] w-full rounded-[10px]"

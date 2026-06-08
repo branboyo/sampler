@@ -70,7 +70,7 @@ export function useAudioEditor() {
   const setTrimEnd = useCallback((time: number) => {
     setState((prev) => ({
       ...prev,
-      trimEnd: Math.min(prev.audioBuffer?.duration ?? time, Math.max(time, prev.trimStart + 0.01)),
+      trimEnd: Math.max(time, prev.trimStart + 0.01),
     }));
   }, []);
 
@@ -81,7 +81,8 @@ export function useAudioEditor() {
     try {
       let newBuffer: AudioBuffer;
       if (effectId === 'trim') {
-        newBuffer = await trimAudio(state.audioBuffer, state.trimStart, state.trimEnd);
+        const safeTrimEnd = Math.min(state.trimEnd, state.audioBuffer.duration);
+        newBuffer = await trimAudio(state.audioBuffer, state.trimStart, safeTrimEnd);
       } else if (effectId === 'reverse') {
         newBuffer = await reverseAudio(state.audioBuffer);
       } else {

@@ -26,7 +26,7 @@ export default function SaveControls({
       <button
         onClick={onSave}
         disabled={disabled}
-        className="cw-pressable flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] bg-cw-primary py-2 text-xs font-semibold text-cw-bg disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+        className="cw-pressable flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] bg-cw-attention py-2 text-xs font-semibold text-cw-bg disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
       >
         <svg
           width="14"

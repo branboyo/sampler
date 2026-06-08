@@ -107,6 +107,24 @@
   transform: scale(0.96);
 }
 
+/* Thin scrollbar in cw-primary, inset within parent padding */
+.cw-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-cw-primary) transparent;
+  margin-right: -12px;
+  padding-right: 12px;
+}
+.cw-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.cw-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cw-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-cw-primary);
+  border-radius: 2px;
+}
+
 /* Chevron transition */
 .cw-chevron {
   transition: transform 0.15s ease;

@@ -67,14 +67,19 @@ export function useRecorder() {
 
       // Set up AudioContext + AnalyserNode for live waveform
       const audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
+      analyser.fftSize = 2048;
       source.connect(analyser);
       // Pass audio through to speakers so the user hears it while recording
       analyser.connect(audioCtx.destination);
       audioCtxRef.current = audioCtx;
       setAnalyserNode(analyser);
+
+      // Let the audio pipeline and stream stabilize before recording
+      // to avoid Opus codec initialization artifacts in the first chunk
+      await new Promise((resolve) => setTimeout(resolve, 120));
 
       // Create MediaRecorder and start collecting chunks
       const recorder = createRecorder(stream);
