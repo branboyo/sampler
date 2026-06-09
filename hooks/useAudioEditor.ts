@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { EditorState } from '@/types';
-import { decodeAudioBlob, trimAudio, reverseAudio } from '@/lib/audio-engine';
-import { getAudioBlob } from '@/lib/storage';
+import { decodeAudioBlob } from '@/lib/audio-engine';
 
 const INITIAL_STATE: EditorState = {
   recordingId: null,
@@ -39,30 +38,6 @@ export function useAudioEditor() {
     }
   }, []);
 
-  const loadRecording = useCallback(async (id: string) => {
-    setState((prev) => ({ ...prev, isProcessing: true, isPlaying: false }));
-    try {
-      const blob = await getAudioBlob(id);
-      if (!blob) {
-        console.error('[Sampler] No audio blob found for id:', id);
-        setState((prev) => ({ ...prev, isProcessing: false }));
-        return;
-      }
-      const audioBuffer = await decodeAudioBlob(blob);
-      setState({
-        recordingId: id,
-        audioBuffer,
-        trimStart: 0,
-        trimEnd: audioBuffer.duration,
-        isPlaying: false,
-        isProcessing: false,
-      });
-    } catch (err) {
-      console.error('[Sampler] Failed to load recording:', err);
-      setState((prev) => ({ ...prev, isProcessing: false }));
-    }
-  }, []);
-
   const setTrimStart = useCallback((time: number) => {
     setState((prev) => ({ ...prev, trimStart: Math.max(0, Math.min(time, prev.trimEnd - 0.01)) }));
   }, []);
@@ -73,35 +48,6 @@ export function useAudioEditor() {
       trimEnd: Math.max(time, prev.trimStart + 0.01),
     }));
   }, []);
-
-  const applyEffect = useCallback(async (effectId: string) => {
-    if (!state.audioBuffer) return;
-    setState((prev) => ({ ...prev, isProcessing: true, isPlaying: false }));
-
-    try {
-      let newBuffer: AudioBuffer;
-      if (effectId === 'trim') {
-        const safeTrimEnd = Math.min(state.trimEnd, state.audioBuffer.duration);
-        newBuffer = await trimAudio(state.audioBuffer, state.trimStart, safeTrimEnd);
-      } else if (effectId === 'reverse') {
-        newBuffer = await reverseAudio(state.audioBuffer);
-      } else {
-        setState((prev) => ({ ...prev, isProcessing: false }));
-        return;
-      }
-      setState({
-        recordingId: state.recordingId,
-        audioBuffer: newBuffer,
-        trimStart: 0,
-        trimEnd: newBuffer.duration,
-        isPlaying: false,
-        isProcessing: false,
-      });
-    } catch (err) {
-      console.error('[Sampler] Effect failed:', err);
-      setState((prev) => ({ ...prev, isProcessing: false }));
-    }
-  }, [state.audioBuffer, state.trimStart, state.trimEnd, state.recordingId]);
 
   const play = useCallback(() => {
     setState((prev) => ({ ...prev, isPlaying: true }));
@@ -132,10 +78,8 @@ export function useAudioEditor() {
   return {
     state,
     loadFromBlob,
-    loadRecording,
     setTrimStart,
     setTrimEnd,
-    applyEffect,
     replaceBuffer,
     play,
     pause,
