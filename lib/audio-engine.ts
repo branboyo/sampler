@@ -85,6 +85,6 @@ export const effects: AudioEffect[] = [
     label: 'Pitch',
     icon: '♪',
     panel: true,
-    apply: async (buffer, _ctx) => buffer, // no-op: PitchShiftControls calls applyPitchShift directly
+    apply: async (buffer, _ctx) => buffer, // no-op: pitch shift is handled directly by the UI
   },
 ];

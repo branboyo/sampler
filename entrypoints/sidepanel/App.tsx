@@ -3,7 +3,7 @@ import type { AppState, AudioFormat } from '@/types';
 import { trimAudio } from '@/lib/audio-engine';
 import { encodeAudio } from '@/lib/encoder';
 import { downloadAudio } from '@/lib/downloader';
-import { saveAudioBlob, saveRecordingMeta } from '@/lib/storage';
+import { saveAudioBlob, saveRecordingMeta, incrementSaveCount, isReviewDismissed } from '@/lib/storage';
 import { useRecorder } from '@/hooks/useRecorder';
 import { useAudioEditor } from '@/hooks/useAudioEditor';
 import { useSettings } from '@/hooks/useSettings';
@@ -18,6 +18,7 @@ import PlaybackControls from '@/components/PlaybackControls';
 import FileNameEditor from '@/components/FileNameEditor';
 import SaveControls from '@/components/SaveControls';
 import PitchDisplay from '@/components/PitchDisplay';
+import ReviewPrompt from '@/components/ReviewPrompt';
 
 const GearIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -35,6 +36,7 @@ export default function App() {
   const [lastEncodedSize, setLastEncodedSize] = useState<number | null>(null);
   const [waveformKey, setWaveformKey] = useState('');
   const [zoomActive, setZoomActive] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   const recorder = useRecorder();
   const editor = useAudioEditor();
@@ -47,6 +49,13 @@ export default function App() {
       setFormat(settings.settings.preferredFormat);
     }
   }, [settings.loading, settings.settings.preferredFormat]);
+
+  // Show review prompt on load if not previously dismissed
+  useEffect(() => {
+    isReviewDismissed().then((dismissed) => {
+      if (!dismissed) setShowReview(true);
+    });
+  }, []);
 
   useEffect(() => {
     if (recorder.state.status === 'stopping' && appState === 'recording') {
@@ -124,6 +133,8 @@ export default function App() {
         size: encoded.size,
       });
       setLastEncodedSize(encoded.size);
+
+      await incrementSaveCount();
 
       setSaveMessage('Saved!');
       setTimeout(() => setSaveMessage(null), 2000);
@@ -228,6 +239,11 @@ export default function App() {
             duration={effectiveBuffer?.duration}
             size={lastEncodedSize ?? undefined}
           />
+          {showReview && (
+            <div className="shrink-0">
+              <ReviewPrompt onDismiss={() => setShowReview(false)} />
+            </div>
+          )}
           <PitchDisplay pitch={pitch.currentPitch} />
           <WaveformEditor
             audioBuffer={effectiveBuffer}
