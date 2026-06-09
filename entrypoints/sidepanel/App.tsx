@@ -57,6 +57,24 @@ export default function App() {
     });
   }, []);
 
+  // Spacebar toggles play/pause in editing state
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (appState !== 'editing') return;
+      e.preventDefault();
+      if (editor.state.isPlaying) {
+        editor.pause();
+      } else {
+        editor.play();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [appState, editor.state.isPlaying]);
+
   useEffect(() => {
     if (recorder.state.status === 'stopping' && appState === 'recording') {
       handleStop();
