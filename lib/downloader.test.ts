@@ -14,17 +14,19 @@ describe('downloadAudio', () => {
     await downloadAudio(blob, 'my-recording.wav', 'Sampler');
 
     expect(mockBrowser.downloads.download).toHaveBeenCalledTimes(1);
-    const callArgs = mockBrowser.downloads.download.mock.calls[0][0];
-    expect(callArgs.filename).toBe('Sampler/my-recording.wav');
-    expect(callArgs.saveAs).toBe(false);
+    const calls = mockBrowser.downloads.download.mock.calls as unknown[][];
+    const callArgs = calls[0]?.[0] as Record<string, unknown> | undefined;
+    expect(callArgs?.filename).toBe('Sampler/my-recording.wav');
+    expect(callArgs?.saveAs).toBe(false);
   });
 
   it('passes a data URL (starts with data:)', async () => {
     const blob = new Blob(['hello'], { type: 'audio/wav' });
     await downloadAudio(blob, 'test.wav', 'Folder');
 
-    const callArgs = mockBrowser.downloads.download.mock.calls[0][0];
-    expect(callArgs.url).toMatch(/^data:/);
+    const calls = mockBrowser.downloads.download.mock.calls as unknown[][];
+    const callArgs = calls[0]?.[0] as Record<string, unknown> | undefined;
+    expect(callArgs?.url).toMatch(/^data:/);
   });
 
   it('returns the download ID from browser.downloads.download', async () => {
