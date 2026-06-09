@@ -3,7 +3,7 @@ import type { AppState, AudioFormat } from '@/types';
 import { trimAudio } from '@/lib/audio-engine';
 import { encodeAudio } from '@/lib/encoder';
 import { downloadAudio } from '@/lib/downloader';
-import { saveAudioBlob, saveRecordingMeta, incrementSaveCount, isReviewDismissed } from '@/lib/storage';
+import { incrementSaveCount, isReviewDismissed } from '@/lib/storage';
 import { useRecorder } from '@/hooks/useRecorder';
 import { useAudioEditor } from '@/hooks/useAudioEditor';
 import { useSettings } from '@/hooks/useSettings';
@@ -121,17 +121,6 @@ export default function App() {
 
       await downloadAudio(encoded, fullFilename, settings.settings.folderName);
 
-      const id = crypto.randomUUID();
-      await saveAudioBlob(id, encoded);
-      await saveRecordingMeta({
-        id,
-        name: fileName,
-        duration: trimmedBuffer.duration,
-        createdAt: Date.now(),
-        sampleRate: trimmedBuffer.sampleRate,
-        channels: trimmedBuffer.numberOfChannels,
-        size: encoded.size,
-      });
       setLastEncodedSize(encoded.size);
 
       await incrementSaveCount();

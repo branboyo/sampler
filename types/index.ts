@@ -1,13 +1,3 @@
-export interface RecordingMeta {
-  id: string;
-  name: string;
-  duration: number;
-  createdAt: number;
-  sampleRate: number;
-  channels: number;
-  size: number;
-}
-
 export interface Settings {
   folderName: string;
   preferredFormat: AudioFormat;
