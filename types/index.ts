@@ -67,12 +67,8 @@ export interface FxChainItem {
 
 export type MessageType =
   | 'START_CAPTURE'
-  | 'STOP_CAPTURE'
   | 'CAPTURE_STARTED'
-  | 'CAPTURE_STOPPED'
-  | 'CAPTURE_ERROR'
-  | 'TIMER_TICK'
-  | 'TIMER_EXPIRED';
+  | 'CAPTURE_ERROR';
 
 export interface ExtensionMessage {
   type: MessageType;
