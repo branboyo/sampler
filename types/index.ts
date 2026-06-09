@@ -34,14 +34,6 @@ export interface EditorState {
   isProcessing: boolean;
 }
 
-export interface AudioEffect {
-  id: string;
-  label: string;
-  icon?: string;
-  panel?: boolean; // if true, clicking opens a panel rather than applying immediately
-  apply: (buffer: AudioBuffer, ctx: OfflineAudioContext) => Promise<AudioBuffer>;
-}
-
 export type FxType = 'delay' | 'reverb' | 'distortion' | 'eq' | 'reverse' | 'pitch';
 
 export interface DelayParams {

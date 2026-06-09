@@ -1,5 +1,3 @@
-import type { AudioEffect } from '@/types';
-
 export async function decodeAudioBlob(
   blob: Blob,
   sampleRate = 44100,
@@ -66,25 +64,3 @@ export async function reverseAudio(buffer: AudioBuffer): Promise<AudioBuffer> {
 
   return offlineCtx.startRendering();
 }
-
-export const effects: AudioEffect[] = [
-  {
-    id: 'trim',
-    label: 'Trim',
-    icon: '✂',
-    apply: async (buffer, _ctx) => Promise.resolve(trimAudio(buffer, 0, buffer.duration)),
-  },
-  {
-    id: 'reverse',
-    label: 'Reverse',
-    icon: '↔',
-    apply: async (buffer, _ctx) => reverseAudio(buffer),
-  },
-  {
-    id: 'pitch',
-    label: 'Pitch',
-    icon: '♪',
-    panel: true,
-    apply: async (buffer, _ctx) => buffer, // no-op: pitch shift is handled directly by the UI
-  },
-];
