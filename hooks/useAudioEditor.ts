@@ -3,12 +3,10 @@ import type { EditorState } from '@/types';
 import { decodeAudioBlob } from '@/lib/audio-engine';
 
 const INITIAL_STATE: EditorState = {
-  recordingId: null,
   audioBuffer: null,
   trimStart: 0,
   trimEnd: 0,
   isPlaying: false,
-  isProcessing: false,
 };
 
 export function useAudioEditor() {
@@ -19,21 +17,18 @@ export function useAudioEditor() {
   }, []);
 
   const loadFromBlob = useCallback(async (blob: Blob, sampleRate = 44100) => {
-    setState((prev) => ({ ...prev, isProcessing: true, isPlaying: false }));
+    setState((prev) => ({ ...prev, isPlaying: false }));
     try {
       const audioBuffer = await decodeAudioBlob(blob, sampleRate);
       setState({
-        recordingId: null,
         audioBuffer,
         trimStart: 0,
         trimEnd: audioBuffer.duration,
         isPlaying: false,
-        isProcessing: false,
       });
       return audioBuffer;
     } catch (err) {
       console.error('[Sampler] Failed to decode audio:', err);
-      setState((prev) => ({ ...prev, isProcessing: false }));
       return null;
     }
   }, []);
@@ -65,14 +60,12 @@ export function useAudioEditor() {
   // the user clicks "Apply Trim" in the waveform editor). Trim handles reset to
   // cover the full new duration.
   const replaceBuffer = useCallback((newBuffer: AudioBuffer) => {
-    setState((prev) => ({
-      recordingId: prev.recordingId,
+    setState({
       audioBuffer: newBuffer,
       trimStart: 0,
       trimEnd: newBuffer.duration,
       isPlaying: false,
-      isProcessing: false,
-    }));
+    });
   }, []);
 
   return {

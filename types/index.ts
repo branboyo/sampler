@@ -16,12 +16,10 @@ export interface RecordingState {
 }
 
 export interface EditorState {
-  recordingId: string | null;
   audioBuffer: AudioBuffer | null;
   trimStart: number;
   trimEnd: number;
   isPlaying: boolean;
-  isProcessing: boolean;
 }
 
 export type FxType = 'delay' | 'reverb' | 'distortion' | 'eq' | 'reverse' | 'pitch';
