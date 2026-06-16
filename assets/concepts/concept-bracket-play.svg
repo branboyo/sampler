@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <rect width="128" height="128" rx="28" fill="#161818"/>
+  <!-- Left trim bracket -->
+  <rect x="24" y="30" width="12" height="68" rx="6" fill="#eef5c5"/>
+  <!-- Play triangle -->
+  <polygon points="48,40 48,88 80,64" fill="#eef5c5"/>
+  <!-- Right trim bracket -->
+  <rect x="92" y="30" width="12" height="68" rx="6" fill="#eef5c5"/>
+</svg>
