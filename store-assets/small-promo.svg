@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280">
+  <rect width="440" height="280" fill="#0f1010"/>
+  <g transform="translate(169, 72) scale(1.32)">
+    <rect x="0" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+    <path d="M 17,34 C 25,5 33,5 39,34 C 45,63 53,63 61,34"
+          stroke="#eef5c5" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <rect x="68" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+  </g>
+  <text x="220" y="210" text-anchor="middle"
+        font-family="'Archivo', sans-serif" font-size="24"
+        font-weight="400" fill="#eef5c5" letter-spacing="8">SAMPLER</text>
+</svg>

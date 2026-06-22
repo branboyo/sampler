@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#0f1010"/>
+  <text x="120" y="370" font-family="Archivo, sans-serif" font-size="52" font-weight="500" fill="#eef5c5">Shape the sound</text>
+  <g transform="translate(760, 90)">
+    <rect width="300" height="620" rx="14" fill="#161818"/>
+    <g transform="translate(126, 16) scale(0.22)">
+      <rect x="0" y="0" width="10" height="68" rx="5" fill="#eef5c5" opacity="0.4"/>
+      <path d="M 17,34 C 25,5 33,5 39,34 C 45,63 53,63 61,34" stroke="#eef5c5" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.4"/>
+      <rect x="68" y="0" width="10" height="68" rx="5" fill="#eef5c5" opacity="0.4"/>
+    </g>
+    <rect x="20" y="80" width="260" height="64" rx="10" fill="#1e2020"/>
+    <text x="40" y="108" font-family="Archivo, sans-serif" font-size="15" font-weight="500" fill="#eef5c5">Reverb</text>
+    <text x="40" y="128" font-family="Archivo, sans-serif" font-size="12" font-weight="400" fill="#eef5c5" opacity="0.35">Room, 40%</text>
+    <rect x="220" y="100" width="40" height="20" rx="10" fill="#eef5c5" opacity="0.2"/>
+    <circle cx="248" cy="110" r="8" fill="#eef5c5"/>
+    <rect x="20" y="156" width="260" height="64" rx="10" fill="#1e2020"/>
+    <text x="40" y="184" font-family="Archivo, sans-serif" font-size="15" font-weight="500" fill="#eef5c5">Delay</text>
+    <text x="40" y="204" font-family="Archivo, sans-serif" font-size="12" font-weight="400" fill="#eef5c5" opacity="0.35">1/4 note, 25%</text>
+    <rect x="220" y="176" width="40" height="20" rx="10" fill="#eef5c5" opacity="0.2"/>
+    <circle cx="248" cy="186" r="8" fill="#eef5c5"/>
+    <rect x="20" y="232" width="260" height="64" rx="10" fill="#1e2020"/>
+    <text x="40" y="260" font-family="Archivo, sans-serif" font-size="15" font-weight="500" fill="#eef5c5">Filter</text>
+    <text x="40" y="280" font-family="Archivo, sans-serif" font-size="12" font-weight="400" fill="#eef5c5" opacity="0.35">Low pass, 2.4 kHz</text>
+    <rect x="220" y="252" width="40" height="20" rx="10" fill="#1e2020" stroke="#eef5c5" stroke-width="1.5" opacity="0.3"/>
+    <circle cx="232" cy="262" r="8" fill="#eef5c5" opacity="0.4"/>
+  </g>
+</svg>

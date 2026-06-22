@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#0f1010"/>
+  <text x="120" y="370" font-family="Archivo, sans-serif" font-size="52" font-weight="500" fill="#eef5c5">Record from</text>
+  <text x="120" y="432" font-family="Archivo, sans-serif" font-size="52" font-weight="500" fill="#eef5c5">any tab</text>
+  <g transform="translate(760, 90)">
+    <rect width="300" height="620" rx="14" fill="#161818"/>
+    <g transform="translate(126, 16) scale(0.22)">
+      <rect x="0" y="0" width="10" height="68" rx="5" fill="#eef5c5" opacity="0.4"/>
+      <path d="M 17,34 C 25,5 33,5 39,34 C 45,63 53,63 61,34" stroke="#eef5c5" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.4"/>
+      <rect x="68" y="0" width="10" height="68" rx="5" fill="#eef5c5" opacity="0.4"/>
+    </g>
+    <circle cx="150" cy="300" r="52" fill="none" stroke="#eef5c5" stroke-width="2.5"/>
+    <circle cx="150" cy="300" r="22" fill="#eef5c5"/>
+  </g>
+</svg>
