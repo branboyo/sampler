@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#0f1010"/>
+
+  <!-- Background logo silhouette -->
+  <defs>
+    <radialGradient id="bg-grad" gradientUnits="userSpaceOnUse" cx="640" cy="408" r="600">
+      <stop offset="0%" stop-color="white"/>
+      <stop offset="100%" stop-color="black"/>
+    </radialGradient>
+    <mask id="bg-mask">
+      <rect width="1280" height="800" fill="url(#bg-grad)"/>
+    </mask>
+  </defs>
+  <g mask="url(#bg-mask)">
+    <g transform="translate(172, 0) scale(12)" opacity="0.06">
+      <rect x="0" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+      <path d="M 17,34 C 25,5 33,5 39,34 C 45,63 53,63 61,34"
+            stroke="#eef5c5" stroke-width="10" stroke-linecap="round" fill="none"/>
+      <rect x="68" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+    </g>
+  </g>
+
+  <!-- Logo mark -->
+  <g transform="translate(531, 240) scale(2.8)">
+    <rect x="0" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+    <path d="M 17,34 C 25,5 33,5 39,34 C 45,63 53,63 61,34"
+          stroke="#eef5c5" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <rect x="68" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="640" y="490" text-anchor="middle"
+        font-family="Archivo" font-size="36"
+        font-weight="500" fill="#eef5c5" letter-spacing="10">SAMPLER</text>
+
+  <!-- Tagline -->
+  <text x="640" y="530" text-anchor="middle"
+        font-family="Archivo" font-size="18"
+        font-weight="400" fill="#f5fad9" opacity="0.4">Record, edit, and export audio from any Chrome tab.</text>
+</svg>

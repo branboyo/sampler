@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#0f1010"/>
+
+  <!-- Background logo silhouette -->
+  <defs>
+    <radialGradient id="bg-grad" gradientUnits="userSpaceOnUse" cx="368" cy="458" r="600">
+      <stop offset="0%" stop-color="white"/>
+      <stop offset="100%" stop-color="black"/>
+    </radialGradient>
+    <mask id="bg-mask">
+      <rect width="1280" height="800" fill="url(#bg-grad)"/>
+    </mask>
+  </defs>
+  <g mask="url(#bg-mask)">
+    <g transform="translate(-100, 50) scale(12)" opacity="0.08">
+      <rect x="0" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+      <path d="M 17,34 C 25,5 33,5 39,34 C 45,63 53,63 61,34"
+            stroke="#eef5c5" stroke-width="10" stroke-linecap="round" fill="none"/>
+      <rect x="68" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+    </g>
+  </g>
+
+  <!-- Small logo -->
+  <g transform="translate(120, 180) scale(0.8)" opacity="0.5">
+    <rect x="0" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+    <path d="M 17,34 C 25,5 33,5 39,34 C 45,63 53,63 61,34"
+          stroke="#eef5c5" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <rect x="68" y="0" width="10" height="68" rx="5" fill="#eef5c5"/>
+  </g>
+
+  <!-- Headline -->
+  <text x="120" y="320" font-family="Archivo" font-size="56" font-weight="600" fill="#eef5c5" letter-spacing="-1">Control the</text>
+  <text x="120" y="388" font-family="Archivo" font-size="56" font-weight="600" fill="#eef5c5" letter-spacing="-1">pitch</text>
+  <!-- Subtitle -->
+  <text x="120" y="430" font-family="Archivo" font-size="18" font-weight="400" fill="#f5fad9" opacity="0.4">Real-time pitch detection with</text>
+  <text x="120" y="454" font-family="Archivo" font-size="18" font-weight="400" fill="#f5fad9" opacity="0.4">semitone shifting and fine-tune control.</text>
+
+  <!-- Panel mockup -->
+  <g transform="translate(740, 50)">
+    <!-- Shadow + panel -->
+    <rect x="6" y="10" width="360" height="700" rx="16" fill="#000" opacity="0.25"/>
+    <rect width="360" height="700" rx="16" fill="#0f1010" stroke="#1e2020" stroke-width="1"/>
+
+    <!-- Header -->
+    <text x="20" y="32" font-family="Archivo" font-size="15" font-weight="600" fill="#f5fad9" letter-spacing="-0.3">Sampler</text>
+    <g transform="translate(320, 10)">
+      <rect width="28" height="28" rx="8" fill="#161818" stroke="#1e2020" stroke-width="1"/>
+      <circle cx="14" cy="14" r="4" fill="none" stroke="#f5fad9" stroke-width="1.5" opacity="0.35"/>
+      <circle cx="14" cy="14" r="1.5" fill="none" stroke="#f5fad9" stroke-width="1.5" opacity="0.35"/>
+    </g>
+    <g transform="translate(278, 10)">
+      <rect width="36" height="28" rx="8" fill="#161818" stroke="#1e2020" stroke-width="1"/>
+      <text x="18" y="18" text-anchor="middle" font-family="Archivo" font-size="11" fill="#f5fad9" opacity="0.5">New</text>
+    </g>
+    <line x1="0" y1="48" x2="360" y2="48" stroke="#1e2020" stroke-width="1"/>
+
+    <!-- FileNameEditor card -->
+    <rect x="20" y="60" width="320" height="44" rx="16" fill="#161818" stroke="#1e2020" stroke-width="1"/>
+    <g transform="translate(36, 75)" opacity="0.35">
+      <path d="M8 0H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6" fill="none" stroke="#f5fad9" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M13.5-1.5a1.4 1.4 0 012 2L9 7l-3 .7.7-3z" fill="none" stroke="#f5fad9" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+    <text x="56" y="87" font-family="Archivo" font-size="13" font-weight="600" fill="#f5fad9" letter-spacing="-0.3">recording-2026-06-22</text>
+    <text x="324" y="87" text-anchor="end" font-family="Archivo" font-size="9" fill="#f5fad9" opacity="0.35">0:14 · 2.4 MB</text>
+
+    <!-- PitchDisplay card -->
+    <rect x="20" y="116" width="320" height="52" rx="16" fill="#161818" stroke="#1e2020" stroke-width="1"/>
+    <text x="40" y="150" font-family="Archivo" font-size="28" font-weight="700" fill="#eef5c5" letter-spacing="-0.5">A</text>
+    <text x="60" y="150" font-family="Archivo" font-size="16" font-weight="500" fill="#f5fad9" opacity="0.5">4</text>
+    <text x="82" y="147" font-family="Archivo" font-size="12" font-weight="500" fill="#b7feae">+3¢</text>
+    <text x="160" y="147" font-family="Archivo" font-size="9" fill="#f5fad9" opacity="0.35">flat</text>
+    <rect x="178" y="139" width="80" height="10" rx="5" fill="#1e2020"/>
+    <line x1="218" y1="139" x2="218" y2="149" stroke="#f5fad9" stroke-width="1" opacity="0.2"/>
+    <rect x="218" y="140" width="3" height="8" rx="1.5" fill="#eef5c5"/>
+    <text x="264" y="147" font-family="Archivo" font-size="9" fill="#f5fad9" opacity="0.35">sharp</text>
+    <text x="324" y="147" text-anchor="end" font-family="Archivo" font-size="9" fill="#f5fad9" opacity="0.35">440.0 Hz</text>
+
+    <!-- FxChain card with Pitch effect -->
+    <rect x="20" y="180" width="320" height="300" rx="16" fill="#161818" stroke="#1e2020" stroke-width="1"/>
+    <text x="36" y="202" font-family="Archivo" font-size="11" font-weight="600" fill="#f5fad9" opacity="0.5" letter-spacing="1">EFFECTS</text>
+    <g transform="translate(276, 188)">
+      <rect width="52" height="24" rx="8" fill="#0f1010" stroke="#1e2020" stroke-width="1"/>
+      <g transform="translate(10, 8)" opacity="0.5">
+        <line x1="0" y1="4" x2="8" y2="4" stroke="#f5fad9" stroke-width="1.5"/>
+        <line x1="4" y1="0" x2="4" y2="8" stroke="#f5fad9" stroke-width="1.5"/>
+      </g>
+      <text x="30" y="16" font-family="Archivo" font-size="10" fill="#f5fad9" opacity="0.5">FX</text>
+    </g>
+
+    <!-- Pitch FxCard -->
+    <rect x="28" y="220" width="304" height="248" rx="10" fill="none" stroke="#eef5c5" stroke-width="1" opacity="0.4"/>
+    <g transform="translate(40, 232)" fill="#f5fad9" opacity="0.35">
+      <circle cx="0" cy="0" r="1.2"/><circle cx="4" cy="0" r="1.2"/>
+      <circle cx="0" cy="3" r="1.2"/><circle cx="4" cy="3" r="1.2"/>
+      <circle cx="0" cy="6" r="1.2"/><circle cx="4" cy="6" r="1.2"/>
+    </g>
+    <circle cx="56" cy="235" r="4" fill="#b7feae"/>
+    <text x="68" y="239" font-family="Archivo" font-size="12" font-weight="500" fill="#f5fad9" letter-spacing="-0.3">Pitch</text>
+    <g transform="translate(310, 231)" opacity="0.35">
+      <polyline points="0,2 4,6 8,2" fill="none" stroke="#f5fad9" stroke-width="1.8"/>
+    </g>
+    <line x1="28" y1="250" x2="332" y2="250" stroke="#1e2020" stroke-width="1"/>
+
+    <!-- PitchKnob -->
+    <g transform="translate(180, 302)">
+      <circle cx="0" cy="0" r="33" fill="none" stroke="#1e2020" stroke-width="5"/>
+      <circle cx="0" cy="0" r="26" fill="#161818" stroke="#1e2020" stroke-width="1"/>
+      <line x1="0" y1="-24" x2="0" y2="-19" stroke="#eef5c5" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <text x="180" y="350" text-anchor="middle" font-family="Archivo" font-size="12" font-weight="700" fill="#eef5c5" letter-spacing="-0.3">0<tspan font-size="9" font-weight="400" fill="#f5fad9" opacity="0.5"> st</tspan></text>
+    <text x="180" y="364" text-anchor="middle" font-family="Archivo" font-size="9" fill="#f5fad9" opacity="0.5">Semitones</text>
+
+    <text x="180" y="384" text-anchor="middle" font-family="Archivo" font-size="9" fill="#f5fad9" opacity="0.5" letter-spacing="1">RANGE</text>
+    <g transform="translate(104, 392)">
+      <rect x="0" y="0" width="30" height="22" rx="11" fill="#eef5c5" opacity="0.15" stroke="#eef5c5" stroke-width="1"/>
+      <text x="15" y="15" text-anchor="middle" font-family="Archivo" font-size="10" fill="#eef5c5">±1</text>
+      <rect x="36" y="0" width="30" height="22" rx="11" fill="#eef5c5" opacity="0.15" stroke="#eef5c5" stroke-width="1"/>
+      <text x="51" y="15" text-anchor="middle" font-family="Archivo" font-size="10" fill="#eef5c5">±6</text>
+      <rect x="72" y="0" width="34" height="22" rx="11" fill="#eef5c5" opacity="0.15" stroke="#eef5c5" stroke-width="1"/>
+      <text x="89" y="15" text-anchor="middle" font-family="Archivo" font-size="10" font-weight="500" fill="#eef5c5">±12</text>
+      <rect x="112" y="0" width="34" height="22" rx="11" fill="none" stroke="#1e2020" stroke-width="1"/>
+      <text x="129" y="15" text-anchor="middle" font-family="Archivo" font-size="10" fill="#f5fad9" opacity="0.5">±24</text>
+    </g>
+
+    <g transform="translate(36, 428)">
+      <text x="0" y="10" font-family="Archivo" font-size="10" fill="#f5fad9" opacity="0.35">Fine tune</text>
+      <rect x="56" y="4" width="200" height="4" rx="2" fill="#1e2020"/>
+      <circle cx="156" cy="6" r="5" fill="#eef5c5"/>
+      <text x="268" y="10" text-anchor="end" font-family="Archivo" font-size="10" fill="#f5fad9" opacity="0.35">0¢</text>
+    </g>
+
+    <rect x="36" y="450" width="288" height="26" rx="6" fill="none" stroke="#1e2020" stroke-width="1"/>
+    <text x="180" y="467" text-anchor="middle" font-family="Archivo" font-size="10" font-weight="500" fill="#f5fad9" opacity="0.5">Preserve Formants</text>
+  </g>
+</svg>
